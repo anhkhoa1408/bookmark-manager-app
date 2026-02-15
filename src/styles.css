@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+body {
+  @apply m-0;
+  font-family: "Manrope", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --neutral-0: #ffffff;
+  --neutral-100: #e8f0ef;
+  --neutral-300: #dde9e7;
+  --neutral-400: #c0cfcc;
+  --neutral-500: #899492;
+  --neutral-800: #4c5c59;
+  --neutral-900: #051513;
+}
+
+.dark {
+  --neutral-0: #ffffff;
+  --neutral-100: #b1b9b9;
+  --neutral-300: #00706e;
+  --neutral-400: #004746;
+  --neutral-500: #004241;
+  --neutral-600: #002e2d;
+  --neutral-800: #001f1f;
+  --neutral-900: #001414;
+}
+
+@theme {
+  /* Neutral (Light) */
+  --color-neutral-0: #ffffff;
+  --color-neutral-100: #e8f0ef;
+  --color-neutral-300: #dde9e7;
+  --color-neutral-400: #c0cfcc;
+  --color-neutral-500: #899492;
+  --color-neutral-800: #4c5c59;
+  --color-neutral-900: #051513;
+
+  /* Neutral (Dark) */
+  --color-neutral-dark-0: #ffffff;
+  --color-neutral-dark-100: #b1b9b9;
+  --color-neutral-dark-300: #00706e;
+  --color-neutral-dark-400: #004746;
+  --color-neutral-dark-500: #004241;
+  --color-neutral-dark-600: #002e2d;
+  --color-neutral-dark-800: #001f1f;
+  --color-neutral-dark-900: #001414;
+
+  /* Teal */
+  --color-teal-700: #014745;
+  --color-teal-800: #013c3b;
+
+  /* Red */
+  --color-red-600: #fd4740;
+  --color-red-800: #cb0a04;
+
+  /* Preset 1 */
+  --text-preset-1-size: 24px;
+  --text-preset-1-line-height: 1.4;
+  --text-preset-1-weight: 700;
+
+  /* Preset 2 bold */
+  --text-preset-2-size: 20px;
+  --text-preset-2-line-height: 1.2;
+  --text-preset-2-weight: 700;
+
+  /* Preset 2 semibold */
+  --text-preset-2sb-size: 20px;
+  --text-preset-2sb-line-height: 1.2;
+  --text-preset-2sb-weight: 600;
+
+  /* Preset 3 semibold */
+  --text-preset-3-size: 16px;
+  --text-preset-3-line-height: 1.4;
+  --text-preset-3-weight: 600;
+
+  /* Preset 3 medium */
+  --text-preset-3m-size: 16px;
+  --text-preset-3m-line-height: 1.3;
+  --text-preset-3m-weight: 500;
+
+  /* Preset 4 semibold */
+  --text-preset-4-size: 14px;
+  --text-preset-4-line-height: 1.4;
+  --text-preset-4-weight: 600;
+
+  /* Preset 4 medium */
+  --text-preset-4m-size: 14px;
+  --text-preset-4m-line-height: 1.5;
+  --text-preset-4m-weight: 500;
+
+  /* Preset 5 */
+  --text-preset-5-size: 12px;
+  --text-preset-5-line-height: 1.4;
+  --text-preset-5-weight: 500;
+
+  --spacing-0: 0px;
+  --spacing-2: 2px;
+  --spacing-4: 4px;
+  --spacing-6: 6px;
+  --spacing-8: 8px;
+  --spacing-10: 10px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-112: 112px;
+  --spacing-128: 128px;
+  --spacing-140: 140px;
+
+  --radius-0: 0px;
+  --radius-4: 4px;
+  --radius-6: 6px;
+  --radius-8: 8px;
+  --radius-10: 10px;
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-20: 20px;
+  --radius-24: 24px;
+  --radius-full: 999px;
+
+  /* Button */
+  --color-button-border: rgba(255, 255, 255, 0.12);
+  --shadow-button: inset 0 0 0 1px rgba(34, 38, 39, 0.12);
+}
+
+@layer utilities {
+  .text-preset-1 {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-1-size);
+    line-height: var(--text-preset-1-line-height);
+    font-weight: var(--text-preset-1-weight);
+  }
+
+  .text-preset-2 {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-2-size);
+    line-height: var(--text-preset-2-line-height);
+    font-weight: var(--text-preset-2-weight);
+  }
+  .text-preset-2sb {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-2sb-size);
+    line-height: var(--text-preset-2sb-line-height);
+    font-weight: var(--text-preset-2sb-weight);
+  }
+
+  .text-preset-3 {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-3-size);
+    line-height: var(--text-preset-3-line-height);
+    font-weight: var(--text-preset-3-weight);
+  }
+  .text-preset-3m {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-3m-size);
+    line-height: var(--text-preset-3m-line-height);
+    font-weight: var(--text-preset-3m-weight);
+  }
+
+  .text-preset-4 {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-4-size);
+    line-height: var(--text-preset-4-line-height);
+    font-weight: var(--text-preset-4-weight);
+  }
+  .text-preset-4m {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-4m-size);
+    line-height: var(--text-preset-4m-line-height);
+    font-weight: var(--text-preset-4m-weight);
+  }
+
+  .text-preset-5 {
+    font-family: var(--font-manrope);
+    font-size: var(--text-preset-5-size);
+    line-height: var(--text-preset-5-line-height);
+    font-weight: var(--text-preset-5-weight);
+  }
+}
