@@ -9,6 +9,7 @@ body {
   font-family: "Manrope", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--neutral-100);
 }
 
 :root {
@@ -100,6 +101,7 @@ body {
   --text-preset-5-line-height: 1.4;
   --text-preset-5-weight: 500;
 
+  /* Spacing */
   --spacing-0: 0px;
   --spacing-2: 2px;
   --spacing-4: 4px;
@@ -120,6 +122,7 @@ body {
   --spacing-128: 128px;
   --spacing-140: 140px;
 
+  /* Border Radius */
   --radius-0: 0px;
   --radius-4: 4px;
   --radius-6: 6px;
@@ -130,6 +133,9 @@ body {
   --radius-20: 20px;
   --radius-24: 24px;
   --radius-full: 999px;
+
+  /* Breakpoints */
+  --break-2xl: 1440px;
 
   /* Button */
   --color-button-border: rgba(255, 255, 255, 0.12);
