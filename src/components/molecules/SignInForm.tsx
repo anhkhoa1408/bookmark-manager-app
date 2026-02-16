@@ -1,10 +1,9 @@
-"use client";
-
 import { auth } from "@/lib/firebase";
 import { useForm } from "@tanstack/react-form";
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import React from "react";
+import { toast } from "sonner";
 import * as z from "zod";
 import { Button } from "../atoms/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../atoms/card";
@@ -18,6 +17,11 @@ const signInFormSchema = z.object({
 });
 
 export const SignInForm: React.FC = () => {
+  const navigate = useNavigate();
+  const { returnUrl } = useSearch({
+    from: "/auth/_auth/sign-in",
+  });
+
   const form = useForm({
     defaultValues: {
       email: "",
@@ -28,16 +32,23 @@ export const SignInForm: React.FC = () => {
       onBlur: signInFormSchema,
     },
     onSubmit: async (values) => {
-      const { email, password } = values.value;
-      const credential = await signInWithEmailAndPassword(auth, email, password);
-      const user = credential.user;
-      const idToken = await user.getIdToken();
-      await fetch("/api/auth/firebase/sign-in", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ idToken }),
-      });
+      try {
+        toast.loading("Signing in...");
+        const { email, password } = values.value;
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        const user = credential.user;
+        const idToken = await user.getIdToken();
+        await fetch("/api/auth/firebase/sign-in", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken }),
+        });
+        navigate({ to: returnUrl || "/home" });
+      } catch (error) {
+        toast.dismiss();
+        toast.error("Failed to sign in. Please check your credentials and try again.");
+      }
     },
   });
 
@@ -88,6 +99,7 @@ export const SignInForm: React.FC = () => {
                     <Input
                       id={field.name}
                       name={field.name}
+                      type="password"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
