@@ -9,27 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
-import { Route as AuthPathlessLayoutRouteRouteImport } from './routes/auth/_pathlessLayout/route'
+import { Route as HomeHomeRouteImport } from './routes/_home/home'
+import { Route as AuthAuthRouteRouteImport } from './routes/auth/_auth/route'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
 import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
-import { Route as AuthPathlessLayoutSignUpRouteImport } from './routes/auth/_pathlessLayout/sign-up'
-import { Route as AuthPathlessLayoutSignInRouteImport } from './routes/auth/_pathlessLayout/sign-in'
+import { Route as AuthAuthSignUpRouteImport } from './routes/auth/_auth/sign-up'
+import { Route as AuthAuthSignInRouteImport } from './routes/auth/_auth/sign-in'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
@@ -40,8 +35,13 @@ const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
   path: '/demo/better-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthPathlessLayoutRouteRoute = AuthPathlessLayoutRouteRouteImport.update({
-  id: '/auth/_pathlessLayout',
+const HomeHomeRoute = HomeHomeRouteImport.update({
+  id: '/_home/home',
+  path: '/home',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthAuthRouteRoute = AuthAuthRouteRouteImport.update({
+  id: '/auth/_auth',
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
@@ -65,18 +65,16 @@ const DemoApiNamesRoute = DemoApiNamesRouteImport.update({
   path: '/demo/api/names',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthPathlessLayoutSignUpRoute =
-  AuthPathlessLayoutSignUpRouteImport.update({
-    id: '/sign-up',
-    path: '/sign-up',
-    getParentRoute: () => AuthPathlessLayoutRouteRoute,
-  } as any)
-const AuthPathlessLayoutSignInRoute =
-  AuthPathlessLayoutSignInRouteImport.update({
-    id: '/sign-in',
-    path: '/sign-in',
-    getParentRoute: () => AuthPathlessLayoutRouteRoute,
-  } as any)
+const AuthAuthSignUpRoute = AuthAuthSignUpRouteImport.update({
+  id: '/sign-up',
+  path: '/sign-up',
+  getParentRoute: () => AuthAuthRouteRoute,
+} as any)
+const AuthAuthSignInRoute = AuthAuthSignInRouteImport.update({
+  id: '/sign-in',
+  path: '/sign-in',
+  getParentRoute: () => AuthAuthRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -104,13 +102,13 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/auth': typeof AuthPathlessLayoutRouteRouteWithChildren
+  '/auth': typeof AuthAuthRouteRouteWithChildren
+  '/home': typeof HomeHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/auth/sign-in': typeof AuthPathlessLayoutSignInRoute
-  '/auth/sign-up': typeof AuthPathlessLayoutSignUpRoute
+  '/auth/sign-in': typeof AuthAuthSignInRoute
+  '/auth/sign-up': typeof AuthAuthSignUpRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -121,13 +119,13 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/auth': typeof AuthPathlessLayoutRouteRouteWithChildren
+  '/auth': typeof AuthAuthRouteRouteWithChildren
+  '/home': typeof HomeHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/auth/sign-in': typeof AuthPathlessLayoutSignInRoute
-  '/auth/sign-up': typeof AuthPathlessLayoutSignUpRoute
+  '/auth/sign-in': typeof AuthAuthSignInRoute
+  '/auth/sign-up': typeof AuthAuthSignUpRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -139,13 +137,13 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/auth/_pathlessLayout': typeof AuthPathlessLayoutRouteRouteWithChildren
+  '/auth/_auth': typeof AuthAuthRouteRouteWithChildren
+  '/_home/home': typeof HomeHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/auth/_pathlessLayout/sign-in': typeof AuthPathlessLayoutSignInRoute
-  '/auth/_pathlessLayout/sign-up': typeof AuthPathlessLayoutSignUpRoute
+  '/auth/_auth/sign-in': typeof AuthAuthSignInRoute
+  '/auth/_auth/sign-up': typeof AuthAuthSignUpRoute
   '/demo/api/names': typeof DemoApiNamesRoute
   '/demo/api/tq-todos': typeof DemoApiTqTodosRoute
   '/demo/start/api-request': typeof DemoStartApiRequestRoute
@@ -158,8 +156,8 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/auth'
+    | '/home'
     | '/demo/better-auth'
     | '/demo/tanstack-query'
     | '/api/auth/$'
@@ -175,8 +173,8 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/auth'
+    | '/home'
     | '/demo/better-auth'
     | '/demo/tanstack-query'
     | '/api/auth/$'
@@ -192,13 +190,13 @@ export interface FileRouteTypes {
     | '/demo/start/ssr'
   id:
     | '__root__'
-    | '/'
-    | '/auth/_pathlessLayout'
+    | '/auth/_auth'
+    | '/_home/home'
     | '/demo/better-auth'
     | '/demo/tanstack-query'
     | '/api/auth/$'
-    | '/auth/_pathlessLayout/sign-in'
-    | '/auth/_pathlessLayout/sign-up'
+    | '/auth/_auth/sign-in'
+    | '/auth/_auth/sign-up'
     | '/demo/api/names'
     | '/demo/api/tq-todos'
     | '/demo/start/api-request'
@@ -210,8 +208,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AuthPathlessLayoutRouteRoute: typeof AuthPathlessLayoutRouteRouteWithChildren
+  AuthAuthRouteRoute: typeof AuthAuthRouteRouteWithChildren
+  HomeHomeRoute: typeof HomeHomeRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -227,13 +225,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
       path: '/demo/tanstack-query'
@@ -248,11 +239,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoBetterAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/_pathlessLayout': {
-      id: '/auth/_pathlessLayout'
+    '/_home/home': {
+      id: '/_home/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof HomeHomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/_auth': {
+      id: '/auth/_auth'
       path: '/auth'
       fullPath: '/auth'
-      preLoaderRoute: typeof AuthPathlessLayoutRouteRouteImport
+      preLoaderRoute: typeof AuthAuthRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/start/server-funcs': {
@@ -283,19 +281,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoApiNamesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/_pathlessLayout/sign-up': {
-      id: '/auth/_pathlessLayout/sign-up'
+    '/auth/_auth/sign-up': {
+      id: '/auth/_auth/sign-up'
       path: '/sign-up'
       fullPath: '/auth/sign-up'
-      preLoaderRoute: typeof AuthPathlessLayoutSignUpRouteImport
-      parentRoute: typeof AuthPathlessLayoutRouteRoute
+      preLoaderRoute: typeof AuthAuthSignUpRouteImport
+      parentRoute: typeof AuthAuthRouteRoute
     }
-    '/auth/_pathlessLayout/sign-in': {
-      id: '/auth/_pathlessLayout/sign-in'
+    '/auth/_auth/sign-in': {
+      id: '/auth/_auth/sign-in'
       path: '/sign-in'
       fullPath: '/auth/sign-in'
-      preLoaderRoute: typeof AuthPathlessLayoutSignInRouteImport
-      parentRoute: typeof AuthPathlessLayoutRouteRoute
+      preLoaderRoute: typeof AuthAuthSignInRouteImport
+      parentRoute: typeof AuthAuthRouteRoute
     }
     '/api/auth/$': {
       id: '/api/auth/$'
@@ -335,25 +333,23 @@ declare module '@tanstack/react-router' {
   }
 }
 
-interface AuthPathlessLayoutRouteRouteChildren {
-  AuthPathlessLayoutSignInRoute: typeof AuthPathlessLayoutSignInRoute
-  AuthPathlessLayoutSignUpRoute: typeof AuthPathlessLayoutSignUpRoute
+interface AuthAuthRouteRouteChildren {
+  AuthAuthSignInRoute: typeof AuthAuthSignInRoute
+  AuthAuthSignUpRoute: typeof AuthAuthSignUpRoute
 }
 
-const AuthPathlessLayoutRouteRouteChildren: AuthPathlessLayoutRouteRouteChildren =
-  {
-    AuthPathlessLayoutSignInRoute: AuthPathlessLayoutSignInRoute,
-    AuthPathlessLayoutSignUpRoute: AuthPathlessLayoutSignUpRoute,
-  }
+const AuthAuthRouteRouteChildren: AuthAuthRouteRouteChildren = {
+  AuthAuthSignInRoute: AuthAuthSignInRoute,
+  AuthAuthSignUpRoute: AuthAuthSignUpRoute,
+}
 
-const AuthPathlessLayoutRouteRouteWithChildren =
-  AuthPathlessLayoutRouteRoute._addFileChildren(
-    AuthPathlessLayoutRouteRouteChildren,
-  )
+const AuthAuthRouteRouteWithChildren = AuthAuthRouteRoute._addFileChildren(
+  AuthAuthRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
-  AuthPathlessLayoutRouteRoute: AuthPathlessLayoutRouteRouteWithChildren,
+  AuthAuthRouteRoute: AuthAuthRouteRouteWithChildren,
+  HomeHomeRoute: HomeHomeRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

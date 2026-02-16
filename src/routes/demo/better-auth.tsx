@@ -8,6 +8,7 @@ export const Route = createFileRoute("/demo/better-auth")({
 
 function BetterAuthDemo() {
   const { data: session, isPending } = authClient.useSession();
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

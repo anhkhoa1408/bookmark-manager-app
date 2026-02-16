@@ -1,18 +1,20 @@
 "use client";
 
+import { auth } from "@/lib/firebase";
 import { useForm } from "@tanstack/react-form";
+import { Link } from "@tanstack/react-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import React from "react";
 import * as z from "zod";
+import { Button } from "../atoms/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../atoms/card";
 import { Field, FieldError, FieldLabel } from "../atoms/field";
 import { Input } from "../atoms/input";
 import { Logo } from "./Logo";
-import { Button } from "../atoms/button";
-import { Link } from "@tanstack/react-router";
 
 const signInFormSchema = z.object({
   email: z.email("Invalid email"),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
+  password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
 export const SignInForm: React.FC = () => {
@@ -26,7 +28,16 @@ export const SignInForm: React.FC = () => {
       onBlur: signInFormSchema,
     },
     onSubmit: async (values) => {
-      console.log(values);
+      const { email, password } = values.value;
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      const user = credential.user;
+      const idToken = await user.getIdToken();
+      await fetch("/api/auth/firebase/sign-in", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ idToken }),
+      });
     },
   });
 
