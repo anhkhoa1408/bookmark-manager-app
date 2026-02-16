@@ -12,7 +12,7 @@ import { Field, FieldError, FieldLabel } from "../atoms/field";
 import { Input } from "../atoms/input";
 import { Logo } from "./Logo";
 
-const signInFormSchema = z.object({
+const signUpFormSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters long"),
   email: z.email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
@@ -28,8 +28,8 @@ export const SignUpForm: React.FC = () => {
       password: "",
     },
     validators: {
-      onChange: signInFormSchema,
-      onBlur: signInFormSchema,
+      onChange: signUpFormSchema,
+      onBlur: signUpFormSchema,
     },
     onSubmit: async (values) => {
       try {

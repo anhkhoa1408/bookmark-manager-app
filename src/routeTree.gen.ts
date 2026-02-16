@@ -19,6 +19,8 @@ import { Route as DemoApiTqTodosRouteImport } from './routes/demo/api.tq-todos'
 import { Route as DemoApiNamesRouteImport } from './routes/demo/api.names'
 import { Route as AuthAuthSignUpRouteImport } from './routes/auth/_auth/sign-up'
 import { Route as AuthAuthSignInRouteImport } from './routes/auth/_auth/sign-in'
+import { Route as AuthAuthResetPasswordRouteImport } from './routes/auth/_auth/reset-password'
+import { Route as AuthAuthForgotPasswordRouteImport } from './routes/auth/_auth/forgot-password'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as DemoStartSsrIndexRouteImport } from './routes/demo/start.ssr.index'
 import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr.spa-mode'
@@ -75,6 +77,16 @@ const AuthAuthSignInRoute = AuthAuthSignInRouteImport.update({
   path: '/sign-in',
   getParentRoute: () => AuthAuthRouteRoute,
 } as any)
+const AuthAuthResetPasswordRoute = AuthAuthResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => AuthAuthRouteRoute,
+} as any)
+const AuthAuthForgotPasswordRoute = AuthAuthForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => AuthAuthRouteRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -107,6 +119,8 @@ export interface FileRoutesByFullPath {
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/auth/forgot-password': typeof AuthAuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthAuthResetPasswordRoute
   '/auth/sign-in': typeof AuthAuthSignInRoute
   '/auth/sign-up': typeof AuthAuthSignUpRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -124,6 +138,8 @@ export interface FileRoutesByTo {
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/auth/forgot-password': typeof AuthAuthForgotPasswordRoute
+  '/auth/reset-password': typeof AuthAuthResetPasswordRoute
   '/auth/sign-in': typeof AuthAuthSignInRoute
   '/auth/sign-up': typeof AuthAuthSignUpRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -142,6 +158,8 @@ export interface FileRoutesById {
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/auth/_auth/forgot-password': typeof AuthAuthForgotPasswordRoute
+  '/auth/_auth/reset-password': typeof AuthAuthResetPasswordRoute
   '/auth/_auth/sign-in': typeof AuthAuthSignInRoute
   '/auth/_auth/sign-up': typeof AuthAuthSignUpRoute
   '/demo/api/names': typeof DemoApiNamesRoute
@@ -161,6 +179,8 @@ export interface FileRouteTypes {
     | '/demo/better-auth'
     | '/demo/tanstack-query'
     | '/api/auth/$'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/demo/api/names'
@@ -178,6 +198,8 @@ export interface FileRouteTypes {
     | '/demo/better-auth'
     | '/demo/tanstack-query'
     | '/api/auth/$'
+    | '/auth/forgot-password'
+    | '/auth/reset-password'
     | '/auth/sign-in'
     | '/auth/sign-up'
     | '/demo/api/names'
@@ -195,6 +217,8 @@ export interface FileRouteTypes {
     | '/demo/better-auth'
     | '/demo/tanstack-query'
     | '/api/auth/$'
+    | '/auth/_auth/forgot-password'
+    | '/auth/_auth/reset-password'
     | '/auth/_auth/sign-in'
     | '/auth/_auth/sign-up'
     | '/demo/api/names'
@@ -295,6 +319,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthAuthSignInRouteImport
       parentRoute: typeof AuthAuthRouteRoute
     }
+    '/auth/_auth/reset-password': {
+      id: '/auth/_auth/reset-password'
+      path: '/reset-password'
+      fullPath: '/auth/reset-password'
+      preLoaderRoute: typeof AuthAuthResetPasswordRouteImport
+      parentRoute: typeof AuthAuthRouteRoute
+    }
+    '/auth/_auth/forgot-password': {
+      id: '/auth/_auth/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/auth/forgot-password'
+      preLoaderRoute: typeof AuthAuthForgotPasswordRouteImport
+      parentRoute: typeof AuthAuthRouteRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -334,11 +372,15 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthAuthRouteRouteChildren {
+  AuthAuthForgotPasswordRoute: typeof AuthAuthForgotPasswordRoute
+  AuthAuthResetPasswordRoute: typeof AuthAuthResetPasswordRoute
   AuthAuthSignInRoute: typeof AuthAuthSignInRoute
   AuthAuthSignUpRoute: typeof AuthAuthSignUpRoute
 }
 
 const AuthAuthRouteRouteChildren: AuthAuthRouteRouteChildren = {
+  AuthAuthForgotPasswordRoute: AuthAuthForgotPasswordRoute,
+  AuthAuthResetPasswordRoute: AuthAuthResetPasswordRoute,
   AuthAuthSignInRoute: AuthAuthSignInRoute,
   AuthAuthSignUpRoute: AuthAuthSignUpRoute,
 }

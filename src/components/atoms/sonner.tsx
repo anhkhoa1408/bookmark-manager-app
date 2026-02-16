@@ -17,8 +17,9 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           default:
-            "flex items-center gap-8! px-12! py-10! rounded-8! border! border-[1px]! border-neutral-300! bg-neutral-0! shadow-[0_6px_9px_0_rgba(21,21,21,0.08)]!",
+            "w-[340px]! flex items-center gap-8! px-12! py-10! rounded-8! border! border-[1px]! border-neutral-300! bg-neutral-0! shadow-[0_6px_9px_0_rgba(21,21,21,0.08)]!",
           title: "text-preset-4m! text-neutral-900!",
+          content: "grow!",
           icon: "m-0! shrink-0! text-neutral-900!",
           closeButton:
             "relative! order-1! shrink-0! m-0! size-20! text-neutral-900! bg-transparent! transform-none! border-0!",

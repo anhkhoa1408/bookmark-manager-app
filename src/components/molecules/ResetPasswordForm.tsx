@@ -1,70 +1,58 @@
-import { auth } from "@/lib/firebase";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import React from "react";
 import { toast } from "sonner";
 import * as z from "zod";
 import { Button } from "../atoms/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../atoms/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../atoms/card";
 import { Field, FieldError, FieldLabel } from "../atoms/field";
 import { Input } from "../atoms/input";
 import { Logo } from "./Logo";
-import { FirebaseError } from "firebase/app";
+import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
-const signInFormSchema = z.object({
-  email: z.email("Invalid email"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
-});
+const resetPasswordFormSchema = z
+  .object({
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
-export const SignInForm: React.FC = () => {
+export const ResetPasswordForm: React.FC = () => {
   const navigate = useNavigate();
-  const { returnUrl } = useSearch({
-    from: "/auth/_auth/sign-in",
+  const { oobCode } = useSearch({
+    from: "/auth/_auth/reset-password",
   });
 
   const form = useForm({
     defaultValues: {
-      email: "",
       password: "",
+      confirmPassword: "",
     },
     validators: {
-      onChange: signInFormSchema,
-      onBlur: signInFormSchema,
+      onChange: resetPasswordFormSchema,
+      onBlur: resetPasswordFormSchema,
     },
     onSubmit: async (values) => {
       try {
-        toast.loading("Signing in...");
-        const { email, password } = values.value;
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-
-        if (!credential.user.emailVerified) {
-          await sendEmailVerification(credential.user);
-          await signOut(auth);
-          toast.dismiss();
-          toast.error("Your email is not verified. Please check your inbox and verify your email before logging in.");
+        if (!oobCode) {
+          toast.error("Invalid or missing password reset code.");
           return;
         }
 
-        const user = credential.user;
-        const idToken = await user.getIdToken();
-        await fetch("/api/auth/firebase/sign-in", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ idToken }),
-        });
+        toast.loading("Resetting password...");
+        const { password } = values.value;
+        await verifyPasswordResetCode(auth, oobCode);
+        await confirmPasswordReset(auth, oobCode, password);
         toast.dismiss();
-        navigate({ to: returnUrl || "/home" });
+        toast.success("Password has been reset successfully.");
+        navigate({ to: "/auth/sign-in" });
       } catch (error) {
         toast.dismiss();
-        if (error instanceof FirebaseError) {
-          if (error.code === "auth/invalid-credential") {
-            toast.error("Invalid email or password");
-            return;
-          }
-        }
-        toast.error("Failed to sign in. Please try again later.");
+        toast.error("Failed to reset password. Please try again later.");
       }
     },
   });
@@ -74,8 +62,8 @@ export const SignInForm: React.FC = () => {
       <Card>
         <Logo />
         <CardHeader>
-          <CardTitle>Log in to your account</CardTitle>
-          <CardDescription>Welcome back! Please enter your details.</CardDescription>
+          <CardTitle>Reset Your Password</CardTitle>
+          <CardDescription>Enter your new password below. Make sure it’s strong and secure.</CardDescription>
         </CardHeader>
 
         <form
@@ -86,12 +74,12 @@ export const SignInForm: React.FC = () => {
         >
           <CardContent>
             <form.Field
-              name="email"
+              name="password"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>New Password *</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -107,16 +95,15 @@ export const SignInForm: React.FC = () => {
             />
 
             <form.Field
-              name="password"
+              name="confirmPassword"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Confirm password *</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
-                      type="password"
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChange={(e) => field.handleChange(e.target.value)}
@@ -131,27 +118,16 @@ export const SignInForm: React.FC = () => {
             <form.Subscribe>
               {({ isSubmitting }) => (
                 <Button type="submit" disabled={isSubmitting}>
-                  Log in
+                  Reset password
                 </Button>
               )}
             </form.Subscribe>
           </CardContent>
         </form>
 
-        <CardFooter className="flex flex-col items-center gap-12">
-          <p className="inline-flex gap-6">
-            <span>Forgot password?</span>
-            <Link to="/auth/forgot-password" className="font-bold">
-              Reset it
-            </Link>
-          </p>
-          <p className="inline-flex gap-6">
-            <span>Don’t have an account?</span>
-            <Link to="/auth/sign-up" className="font-bold">
-              Sign up
-            </Link>
-          </p>
-        </CardFooter>
+        <Link to="/auth/sign-in" className="font-bold text-preset-4 mx-auto">
+          Back to login
+        </Link>
       </Card>
     </div>
   );

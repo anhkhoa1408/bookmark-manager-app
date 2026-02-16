@@ -4,7 +4,6 @@ import { createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { DecodedIdToken } from "firebase-admin/auth";
-import { redirect } from "@tanstack/react-router";
 
 const firebaseAuthPlugin = (): BetterAuthPlugin => ({
   id: "firebase-auth",
