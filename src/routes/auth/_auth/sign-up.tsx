@@ -1,3 +1,4 @@
+import { SignUpForm } from "@/components/molecules/SignUpForm";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/auth/_auth/sign-up")({
@@ -6,5 +7,5 @@ export const Route = createFileRoute("/auth/_auth/sign-up")({
 });
 
 function RouteComponent() {
-  return <div>Hello "/auth/_pathlessLayout/sign-up"!</div>;
+  return <SignUpForm />;
 }

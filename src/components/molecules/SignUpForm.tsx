@@ -1,7 +1,8 @@
 import { auth } from "@/lib/firebase";
 import { useForm } from "@tanstack/react-form";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { FirebaseError } from "firebase/app";
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateCurrentUser } from "firebase/auth";
 import React from "react";
 import { toast } from "sonner";
 import * as z from "zod";
@@ -12,18 +13,17 @@ import { Input } from "../atoms/input";
 import { Logo } from "./Logo";
 
 const signInFormSchema = z.object({
+  fullName: z.string().min(2, "Full name must be at least 2 characters long"),
   email: z.email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
-export const SignInForm: React.FC = () => {
+export const SignUpForm: React.FC = () => {
   const navigate = useNavigate();
-  const { returnUrl } = useSearch({
-    from: "/auth/_auth/sign-in",
-  });
 
   const form = useForm({
     defaultValues: {
+      fullName: "",
       email: "",
       password: "",
     },
@@ -33,31 +33,27 @@ export const SignInForm: React.FC = () => {
     },
     onSubmit: async (values) => {
       try {
-        toast.loading("Signing in...");
-        const { email, password } = values.value;
-        const credential = await signInWithEmailAndPassword(auth, email, password);
-
-        if (!credential.user.emailVerified) {
-          await sendEmailVerification(credential.user);
-          await signOut(auth);
-          toast.dismiss();
-          toast.error("Your email is not verified. Please check your inbox and verify your email before logging in.");
-          return;
-        }
-
-        const user = credential.user;
-        const idToken = await user.getIdToken();
-        await fetch("/api/auth/firebase/sign-in", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ idToken }),
-        });
+        toast.loading("Creating account...");
+        const { fullName, email, password } = values.value;
+        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateCurrentUser(auth, Object.assign(credential.user, { displayName: fullName }));
+        await sendEmailVerification(credential.user);
+        await signOut(auth);
         toast.dismiss();
-        navigate({ to: returnUrl || "/home" });
+        toast.success(
+          "Account created successfully! Please check your email to verify your account before logging in.",
+        );
+        navigate({ to: "/auth/sign-in" });
       } catch (error) {
         toast.dismiss();
-        toast.error("Failed to sign in. Please check your credentials and try again.");
+        if (error instanceof FirebaseError) {
+          if (error.code === "auth/email-already-in-use") {
+            toast.error("This email is already in use. Please use a different email or log in.");
+            return;
+          }
+        }
+
+        toast.error("Failed to create account. Please check your details and try again.");
       }
     },
   });
@@ -67,8 +63,10 @@ export const SignInForm: React.FC = () => {
       <Card>
         <Logo />
         <CardHeader>
-          <CardTitle>Log in to your account</CardTitle>
-          <CardDescription>Welcome back! Please enter your details.</CardDescription>
+          <CardTitle>Create your account</CardTitle>
+          <CardDescription>
+            Join us and start saving your favorite links — organized, searchable, and always within reach.
+          </CardDescription>
         </CardHeader>
 
         <form
@@ -79,12 +77,33 @@ export const SignInForm: React.FC = () => {
         >
           <CardContent>
             <form.Field
+              name="fullName"
+              children={(field) => {
+                const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field>
+                    <FieldLabel htmlFor={field.name}>Full name *</FieldLabel>
+                    <Input
+                      id={field.name}
+                      name={field.name}
+                      value={field.state.value}
+                      onBlur={field.handleBlur}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      aria-invalid={isInvalid}
+                    />
+                    {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                  </Field>
+                );
+              }}
+            />
+
+            <form.Field
               name="email"
               children={(field) => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>Email</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Email address *</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -105,7 +124,7 @@ export const SignInForm: React.FC = () => {
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field>
-                    <FieldLabel htmlFor={field.name}>Password</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>Password *</FieldLabel>
                     <Input
                       id={field.name}
                       name={field.name}
@@ -124,7 +143,7 @@ export const SignInForm: React.FC = () => {
             <form.Subscribe>
               {({ isSubmitting }) => (
                 <Button type="submit" disabled={isSubmitting}>
-                  Log in
+                  Create account
                 </Button>
               )}
             </form.Subscribe>
@@ -133,15 +152,9 @@ export const SignInForm: React.FC = () => {
 
         <CardFooter className="flex flex-col items-center gap-12">
           <p className="inline-flex gap-6">
-            <span>Forgot password?</span>
-            <Link to="/auth/sign-up" className="font-bold">
-              Reset it
-            </Link>
-          </p>
-          <p className="inline-flex gap-6">
-            <span>Don’t have an account?</span>
-            <Link to="/auth/sign-up" className="font-bold">
-              Sign up
+            <span>Already have an account?</span>
+            <Link to="/auth/sign-in" className="font-bold">
+              Log in
             </Link>
           </p>
         </CardFooter>
