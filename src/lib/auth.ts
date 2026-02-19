@@ -48,6 +48,9 @@ const firebaseAuthPlugin = (): BetterAuthPlugin => ({
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+  },
   socialProviders: {
     google: {
       prompt: "select_account",

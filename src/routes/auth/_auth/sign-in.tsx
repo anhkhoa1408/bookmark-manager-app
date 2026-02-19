@@ -1,4 +1,4 @@
-import { SignInForm } from "@/components/molecules/SignInForm";
+import { SignInForm } from "@/components/organisms/(auth)/SignInForm";
 import { createFileRoute } from "@tanstack/react-router";
 import * as z from "zod";
 

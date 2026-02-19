@@ -1,7 +1,8 @@
+import MainTemplate from "@/components/templates/MainTemplate";
 import { authMiddleware } from "@/middleware/auth";
 import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/_home/home")({
+export const Route = createFileRoute("/_main")({
   component: RouteComponent,
   server: {
     middleware: [authMiddleware],
@@ -9,5 +10,5 @@ export const Route = createFileRoute("/_home/home")({
 });
 
 function RouteComponent() {
-  return <div>Hello "/home/home"!</div>;
+  return <MainTemplate />;
 }

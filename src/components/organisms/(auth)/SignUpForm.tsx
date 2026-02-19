@@ -6,11 +6,11 @@ import { createUserWithEmailAndPassword, sendEmailVerification, signOut, updateC
 import React from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { Button } from "../atoms/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../atoms/card";
-import { Field, FieldError, FieldLabel } from "../atoms/field";
-import { Input } from "../atoms/input";
-import { Logo } from "./Logo";
+import { Button } from "../../atoms/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../../atoms/card";
+import { Field, FieldError, FieldLabel } from "../../atoms/field";
+import { Input } from "../../atoms/input";
+import { Logo } from "../../molecules/Logo";
 
 const signUpFormSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters long"),

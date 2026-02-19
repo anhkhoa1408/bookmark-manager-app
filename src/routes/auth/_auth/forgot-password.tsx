@@ -1,4 +1,4 @@
-import { ForgotPasswordForm } from "@/components/molecules/ForgotPasswordForm";
+import { ForgotPasswordForm } from "@/components/organisms/(auth)/ForgotPasswordForm";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/auth/_auth/forgot-password")({

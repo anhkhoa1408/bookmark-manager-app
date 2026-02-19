@@ -1,4 +1,4 @@
-import { ResetPasswordForm } from "@/components/molecules/ResetPasswordForm";
+import { ResetPasswordForm } from "@/components/organisms/(auth)/ResetPasswordForm";
 import { createFileRoute } from "@tanstack/react-router";
 import * as z from "zod";
 
@@ -12,5 +12,5 @@ export const Route = createFileRoute("/auth/_auth/reset-password")({
 });
 
 function RouteComponent() {
-  return <ResetPasswordForm  />;
+  return <ResetPasswordForm />;
 }

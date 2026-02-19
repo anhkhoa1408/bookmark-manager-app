@@ -5,11 +5,11 @@ import { sendPasswordResetEmail } from "firebase/auth";
 import React from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { Button } from "../atoms/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../atoms/card";
-import { Field, FieldError, FieldLabel } from "../atoms/field";
-import { Input } from "../atoms/input";
-import { Logo } from "./Logo";
+import { Button } from "../../atoms/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../atoms/card";
+import { Field, FieldError, FieldLabel } from "../../atoms/field";
+import { Input } from "../../atoms/input";
+import { Logo } from "../../molecules/Logo";
 
 const forgotPasswordFormSchema = z.object({
   email: z.email("Invalid email"),

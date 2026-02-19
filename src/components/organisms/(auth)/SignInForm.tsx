@@ -1,16 +1,16 @@
+import { Button } from "@/components/atoms/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/atoms/card";
+import { Field, FieldError, FieldLabel } from "@/components/atoms/field";
+import { Input } from "@/components/atoms/input";
+import { Logo } from "@/components/molecules/Logo";
 import { auth } from "@/lib/firebase";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { FirebaseError } from "firebase/app";
 import { sendEmailVerification, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import React from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { Button } from "../atoms/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../atoms/card";
-import { Field, FieldError, FieldLabel } from "../atoms/field";
-import { Input } from "../atoms/input";
-import { Logo } from "./Logo";
-import { FirebaseError } from "firebase/app";
 
 const signInFormSchema = z.object({
   email: z.email("Invalid email"),

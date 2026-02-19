@@ -9,9 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MainRouteRouteImport } from './routes/_main/route'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
-import { Route as HomeHomeRouteImport } from './routes/_home/home'
+import { Route as MainHomeRouteImport } from './routes/_main/home'
 import { Route as AuthAuthRouteRouteImport } from './routes/auth/_auth/route'
 import { Route as DemoStartServerFuncsRouteImport } from './routes/demo/start.server-funcs'
 import { Route as DemoStartApiRequestRouteImport } from './routes/demo/start.api-request'
@@ -27,6 +28,10 @@ import { Route as DemoStartSsrSpaModeRouteImport } from './routes/demo/start.ssr
 import { Route as DemoStartSsrFullSsrRouteImport } from './routes/demo/start.ssr.full-ssr'
 import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ssr.data-only'
 
+const MainRouteRoute = MainRouteRouteImport.update({
+  id: '/_main',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
@@ -37,10 +42,10 @@ const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
   path: '/demo/better-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HomeHomeRoute = HomeHomeRouteImport.update({
-  id: '/_home/home',
+const MainHomeRoute = MainHomeRouteImport.update({
+  id: '/home',
   path: '/home',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => MainRouteRoute,
 } as any)
 const AuthAuthRouteRoute = AuthAuthRouteRouteImport.update({
   id: '/auth/_auth',
@@ -114,8 +119,9 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof MainRouteRouteWithChildren
   '/auth': typeof AuthAuthRouteRouteWithChildren
-  '/home': typeof HomeHomeRoute
+  '/home': typeof MainHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -133,8 +139,9 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof MainRouteRouteWithChildren
   '/auth': typeof AuthAuthRouteRouteWithChildren
-  '/home': typeof HomeHomeRoute
+  '/home': typeof MainHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -153,8 +160,9 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/_main': typeof MainRouteRouteWithChildren
   '/auth/_auth': typeof AuthAuthRouteRouteWithChildren
-  '/_home/home': typeof HomeHomeRoute
+  '/_main/home': typeof MainHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/auth'
     | '/home'
     | '/demo/better-auth'
@@ -193,6 +202,7 @@ export interface FileRouteTypes {
     | '/demo/start/ssr/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/'
     | '/auth'
     | '/home'
     | '/demo/better-auth'
@@ -212,8 +222,9 @@ export interface FileRouteTypes {
     | '/demo/start/ssr'
   id:
     | '__root__'
+    | '/_main'
     | '/auth/_auth'
-    | '/_home/home'
+    | '/_main/home'
     | '/demo/better-auth'
     | '/demo/tanstack-query'
     | '/api/auth/$'
@@ -232,8 +243,8 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  MainRouteRoute: typeof MainRouteRouteWithChildren
   AuthAuthRouteRoute: typeof AuthAuthRouteRouteWithChildren
-  HomeHomeRoute: typeof HomeHomeRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
@@ -249,6 +260,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_main': {
+      id: '/_main'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof MainRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
       path: '/demo/tanstack-query'
@@ -263,12 +281,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoBetterAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_home/home': {
-      id: '/_home/home'
+    '/_main/home': {
+      id: '/_main/home'
       path: '/home'
       fullPath: '/home'
-      preLoaderRoute: typeof HomeHomeRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof MainHomeRouteImport
+      parentRoute: typeof MainRouteRoute
     }
     '/auth/_auth': {
       id: '/auth/_auth'
@@ -371,6 +389,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MainRouteRouteChildren {
+  MainHomeRoute: typeof MainHomeRoute
+}
+
+const MainRouteRouteChildren: MainRouteRouteChildren = {
+  MainHomeRoute: MainHomeRoute,
+}
+
+const MainRouteRouteWithChildren = MainRouteRoute._addFileChildren(
+  MainRouteRouteChildren,
+)
+
 interface AuthAuthRouteRouteChildren {
   AuthAuthForgotPasswordRoute: typeof AuthAuthForgotPasswordRoute
   AuthAuthResetPasswordRoute: typeof AuthAuthResetPasswordRoute
@@ -390,8 +420,8 @@ const AuthAuthRouteRouteWithChildren = AuthAuthRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  MainRouteRoute: MainRouteRouteWithChildren,
   AuthAuthRouteRoute: AuthAuthRouteRouteWithChildren,
-  HomeHomeRoute: HomeHomeRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,

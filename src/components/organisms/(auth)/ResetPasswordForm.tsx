@@ -3,11 +3,11 @@ import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import React from "react";
 import { toast } from "sonner";
 import * as z from "zod";
-import { Button } from "../atoms/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../atoms/card";
-import { Field, FieldError, FieldLabel } from "../atoms/field";
-import { Input } from "../atoms/input";
-import { Logo } from "./Logo";
+import { Button } from "../../atoms/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../atoms/card";
+import { Field, FieldError, FieldLabel } from "../../atoms/field";
+import { Input } from "../../atoms/input";
+import { Logo } from "../../molecules/Logo";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 
