@@ -8,7 +8,7 @@ const Avatar = () => {
   }, [auth.currentUser]);
 
   return (
-    <div className="flex items-center justify-center rou  nded-full size-40 ring-offset-2 ring-offset-neutral-0 ring-2 ring-teal-700">
+    <div className="flex items-center justify-center rounded-full size-40 ring-offset-2 ring-offset-neutral-0 ring-2 ring-teal-700">
       {/* <img src="" alt="avatar" /> */}
       <UserIcon />
     </div>

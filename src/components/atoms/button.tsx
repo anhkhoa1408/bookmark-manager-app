@@ -17,7 +17,7 @@ const buttonVariants = cva(
           "text-neutral-0 bg-red-800 border-button-border focus-visible:ring-offset-2 focus-visible:ring-offset-white focus-visible:ring-2 focus-visible:ring-red-800",
       },
       size: {
-        default: "px-10 py-12",
+        default: "px-16 py-12",
         icon: "min-w-32 h-32 p-0",
       },
     },
