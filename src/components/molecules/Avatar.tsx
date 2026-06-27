@@ -8,9 +8,9 @@ const Avatar = () => {
   }, [auth.currentUser]);
 
   return (
-    <div className="flex items-center justify-center rounded-full size-40 ring-offset-2 ring-offset-neutral-0 ring-2 ring-teal-700">
+    <div className="flex size-40 items-center justify-center rounded-full ring-2 ring-teal-700 ring-offset-2 ring-offset-neutral-0 dark:ring-offset-neutral-dark-800">
       {/* <img src="" alt="avatar" /> */}
-      <UserIcon />
+      <UserIcon className="text-neutral-800 dark:text-neutral-0" />
     </div>
   );
 };

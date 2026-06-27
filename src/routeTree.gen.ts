@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MainRouteRouteImport } from './routes/_main/route'
+import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo/tanstack-query'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as MainHomeRouteImport } from './routes/_main/home'
@@ -30,6 +31,11 @@ import { Route as DemoStartSsrDataOnlyRouteImport } from './routes/demo/start.ss
 
 const MainRouteRoute = MainRouteRouteImport.update({
   id: '/_main',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
@@ -119,7 +125,7 @@ const DemoStartSsrDataOnlyRoute = DemoStartSsrDataOnlyRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof MainRouteRouteWithChildren
+  '/': typeof IndexRoute
   '/auth': typeof AuthAuthRouteRouteWithChildren
   '/home': typeof MainHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
@@ -139,7 +145,7 @@ export interface FileRoutesByFullPath {
   '/demo/start/ssr/': typeof DemoStartSsrIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof MainRouteRouteWithChildren
+  '/': typeof IndexRoute
   '/auth': typeof AuthAuthRouteRouteWithChildren
   '/home': typeof MainHomeRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
@@ -160,6 +166,7 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
+  '/': typeof IndexRoute
   '/_main': typeof MainRouteRouteWithChildren
   '/auth/_auth': typeof AuthAuthRouteRouteWithChildren
   '/_main/home': typeof MainHomeRoute
@@ -222,6 +229,7 @@ export interface FileRouteTypes {
     | '/demo/start/ssr'
   id:
     | '__root__'
+    | '/'
     | '/_main'
     | '/auth/_auth'
     | '/_main/home'
@@ -243,6 +251,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
+  IndexRoute: typeof IndexRoute
   MainRouteRoute: typeof MainRouteRouteWithChildren
   AuthAuthRouteRoute: typeof AuthAuthRouteRouteWithChildren
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
@@ -265,6 +274,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof MainRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demo/tanstack-query': {
@@ -420,6 +436,7 @@ const AuthAuthRouteRouteWithChildren = AuthAuthRouteRoute._addFileChildren(
 )
 
 const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
   MainRouteRoute: MainRouteRouteWithChildren,
   AuthAuthRouteRoute: AuthAuthRouteRouteWithChildren,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
