@@ -1,7 +1,7 @@
 import { PlusIcon, SearchIcon } from "lucide-react";
 import { signOut as signOutFirebase } from "firebase/auth";
-import { useNavigate, useRouter } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,20 +15,25 @@ import { authClient } from "@/lib/firebase/auth-client";
 import { useBookmarkFilters } from "@/lib/contexts/bookmark-filters";
 import { auth as firebaseAuth } from "@/lib/firebase/firebase";
 import type { ParsedBookmarkImport } from "@/lib/bookmark-import";
+import { clearBookmarkCache, syncBookmarkToCache } from "@/lib/cache/bookmark-cache";
+import { clearTagCache, syncTagsFromServer } from "@/lib/cache/tag-cache";
 import { createBookmark } from "@/server/bookmarks";
 import { createImportJob, getImportJob } from "@/server/importJobs";
 
 export default function Header() {
   const navigate = useNavigate();
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const { searchTerm, onSearchTermChange } = useBookmarkFilters();
   const { data: session } = authClient.useSession();
   const [activeImportJobId, setActiveImportJobId] = useState<string | null>(null);
   const createBookmarkMutation = useMutation({
     mutationFn: (values: BookmarkFormValues) => createBookmark({ data: values }),
-    onSuccess: async () => {
+    onSuccess: async (bookmark) => {
       toast.success("Bookmark saved");
-      await router.invalidate();
+      await syncBookmarkToCache(bookmark);
+      await syncTagsFromServer();
+      await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+      await queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
     onError: () => {
       toast.error("Could not save bookmark");
@@ -61,13 +66,17 @@ export default function Header() {
           if (job.status === "succeeded") {
             setActiveImportJobId(null);
             toast.success(`Imported ${job.importedCount.toLocaleString("en")} bookmarks`);
-            await router.invalidate();
+            await clearBookmarkCache();
+            await syncTagsFromServer();
+            await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+            await queryClient.invalidateQueries({ queryKey: ["tags"] });
           }
 
           if (job.status === "failed") {
             setActiveImportJobId(null);
             toast.error(job.lastError ?? "Bookmark import failed");
-            await router.invalidate();
+            await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+            await queryClient.invalidateQueries({ queryKey: ["tags"] });
           }
         })
         .catch(() => {
@@ -82,9 +91,10 @@ export default function Header() {
       isActive = false;
       window.clearInterval(intervalId);
     };
-  }, [activeImportJobId, router]);
+  }, [activeImportJobId, queryClient]);
 
   const handleLogout = async () => {
+    await Promise.allSettled([clearBookmarkCache(), clearTagCache()]);
     await Promise.allSettled([authClient.signOut(), signOutFirebase(firebaseAuth)]);
     await navigate({ to: "/auth/sign-in" });
   };

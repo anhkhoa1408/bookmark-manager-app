@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ArrowDownUpIcon, RefreshCwIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,26 +11,15 @@ import { BookmarkDialog } from "@/components/molecules/BookmarkDialog";
 import { VirtualBookmarkGrid } from "@/components/organisms/VirtualBookmarkGrid";
 import { useBookmarkCardActions } from "@/hooks/use-bookmark-card-actions";
 import { useBookmarkFilters } from "@/lib/contexts/bookmark-filters";
-import { getBookmarksPage, type BookmarkListItem, type BookmarksPage } from "@/server/bookmarks";
+import { getBookmarksPageCacheFirst } from "@/lib/cache/bookmark-cache";
+import type { BookmarkListItem, BookmarksPage } from "@/server/bookmarks";
 
 const BOOKMARKS_PAGE_SIZE = 30;
 
 export const Route = createFileRoute("/_main/home")({
-  loader: async () => {
-    try {
-      return {
-        page: await getBookmarksPage({ data: { archived: false, limit: BOOKMARKS_PAGE_SIZE } }),
-        loadError: null,
-      };
-    } catch (error) {
-      console.error("Could not load bookmarks.", error);
-
-      return {
-        page: createEmptyBookmarksPage(),
-        loadError: "Could not load bookmarks right now.",
-      };
-    }
-  },
+  loader: () => ({
+    page: createEmptyBookmarksPage(),
+  }),
   staleTime: 30_000,
   gcTime: 5 * 60_000,
   component: RouteComponent,
@@ -45,8 +34,7 @@ const sortOptions = [
 ] satisfies Array<ActionDropdownItem & { value: BookmarkSort }>;
 
 function RouteComponent() {
-  const { page: loaderPage, loadError } = Route.useLoaderData();
-  const router = useRouter();
+  const { page: loaderPage } = Route.useLoaderData();
   const { searchTerm, selectedTagIds } = useBookmarkFilters();
   const [bookmarks, setBookmarks] = useState(loaderPage.bookmarks);
   const [selectedSort, setSelectedSort] = useState<BookmarkSort>("recently-added");
@@ -55,12 +43,10 @@ function RouteComponent() {
   const bookmarksQuery = useInfiniteQuery({
     queryKey: ["bookmarks", "active"],
     queryFn: ({ pageParam }) =>
-      getBookmarksPage({
-        data: {
-          archived: false,
-          cursor: pageParam,
-          limit: BOOKMARKS_PAGE_SIZE,
-        },
+      getBookmarksPageCacheFirst({
+        archived: false,
+        cursor: pageParam,
+        limit: BOOKMARKS_PAGE_SIZE,
       }),
     initialData: {
       pages: [loaderPage],
@@ -68,8 +54,9 @@ function RouteComponent() {
     },
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor,
-    enabled: !loadError,
+    enabled: typeof window !== "undefined",
   });
+  const loadError = bookmarksQuery.error ? "Could not load bookmarks right now." : null;
 
   useEffect(() => {
     setBookmarks(bookmarksQuery.data?.pages.flatMap((page) => page.bookmarks) ?? loaderPage.bookmarks);
@@ -91,8 +78,7 @@ function RouteComponent() {
     const filtered = bookmarks.filter((bookmark) => {
       const matchesTitle =
         normalizedSearchTerm.length === 0 || bookmark.title.toLowerCase().includes(normalizedSearchTerm);
-      const matchesTags =
-        selectedTagIdsSet.size === 0 || bookmark.tags.some((tag) => selectedTagIdsSet.has(tag.id));
+      const matchesTags = selectedTagIdsSet.size === 0 || bookmark.tags.some((tag) => selectedTagIdsSet.has(tag.id));
 
       return matchesTitle && matchesTags;
     });
@@ -152,7 +138,7 @@ function RouteComponent() {
           <p className="max-w-md text-preset-4m text-neutral-800 dark:text-neutral-dark-100">
             The server returned an error. You can retry without leaving this page.
           </p>
-          <Button type="button" variant="secondary" className="border" onClick={() => void router.invalidate()}>
+          <Button type="button" variant="secondary" className="border" onClick={() => void bookmarksQuery.refetch()}>
             <RefreshCwIcon className="size-20" aria-hidden="true" />
             Retry
           </Button>

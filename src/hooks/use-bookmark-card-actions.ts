@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRouter } from "@tanstack/react-router";
 import { useCallback, useMemo, type Dispatch, type SetStateAction } from "react";
 import { toast } from "sonner";
 
 import type { BookmarkFormValues } from "@/components/molecules/BookmarkDialog";
+import { deleteBookmarkFromCache, syncBookmarkToCache } from "@/lib/cache/bookmark-cache";
+import { syncTagsFromServer } from "@/lib/cache/tag-cache";
 import {
   archiveBookmark,
   deleteBookmarkPermanently,
@@ -36,7 +37,6 @@ export function useBookmarkCardActions({
   isDetailOpen,
   setIsDetailOpen,
 }: UseBookmarkCardActionsParams) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const selectedBookmark = bookmarks.find((bookmark) => bookmark.id === selectedBookmarkId) ?? null;
   const isArchivedPage = archiveMode === "archived";
@@ -62,8 +62,15 @@ export function useBookmarkCardActions({
     },
     onSuccess: async (updatedBookmark) => {
       toast.success("Bookmark updated");
+      await syncBookmarkToCache(updatedBookmark);
+      await syncTagsFromServer();
+      setBookmarks((currentBookmarks) =>
+        updateBookmarkInList(currentBookmarks, updatedBookmark.id, () => updatedBookmark),
+      );
+      queryClient.setQueryData(["bookmark-detail", updatedBookmark.id], updatedBookmark);
       await queryClient.invalidateQueries({ queryKey: ["bookmark-detail", updatedBookmark.id] });
-      await router.invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+      await queryClient.invalidateQueries({ queryKey: ["tags"] });
       setIsDetailOpen(false);
       setSelectedBookmarkId(null);
     },
@@ -96,10 +103,13 @@ export function useBookmarkCardActions({
       return { bookmarkId, previousBookmarks, previousDetail };
     },
     onSuccess: async (updatedBookmark) => {
-      setBookmarks((currentBookmarks) => updateBookmarkInList(currentBookmarks, updatedBookmark.id, () => updatedBookmark));
+      await syncBookmarkToCache(updatedBookmark);
+      setBookmarks((currentBookmarks) =>
+        updateBookmarkInList(currentBookmarks, updatedBookmark.id, () => updatedBookmark),
+      );
       queryClient.setQueryData(["bookmark-detail", updatedBookmark.id], updatedBookmark);
       await queryClient.invalidateQueries({ queryKey: ["bookmark-detail", updatedBookmark.id] });
-      await router.invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
     onError: (_error, _bookmarkId, context) => {
       if (context) {
@@ -132,9 +142,10 @@ export function useBookmarkCardActions({
     },
     onSuccess: async (updatedBookmark) => {
       toast.success(isArchivedPage ? "Bookmark unarchived" : "Bookmark archived");
+      await syncBookmarkToCache(updatedBookmark);
       queryClient.setQueryData(["bookmark-detail", updatedBookmark.id], updatedBookmark);
       await queryClient.invalidateQueries({ queryKey: ["bookmark-detail", updatedBookmark.id] });
-      await router.invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
     onError: (_error, _bookmarkId, context) => {
       if (context) {
@@ -173,10 +184,13 @@ export function useBookmarkCardActions({
       return { bookmarkId, previousBookmarks, previousDetail };
     },
     onSuccess: async (updatedBookmark) => {
-      setBookmarks((currentBookmarks) => updateBookmarkInList(currentBookmarks, updatedBookmark.id, () => updatedBookmark));
+      await syncBookmarkToCache(updatedBookmark);
+      setBookmarks((currentBookmarks) =>
+        updateBookmarkInList(currentBookmarks, updatedBookmark.id, () => updatedBookmark),
+      );
       queryClient.setQueryData(["bookmark-detail", updatedBookmark.id], updatedBookmark);
       await queryClient.invalidateQueries({ queryKey: ["bookmark-detail", updatedBookmark.id] });
-      await router.invalidate();
+      await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
     },
     onError: (_error, _bookmarkId, context) => {
       if (context) {
@@ -197,9 +211,12 @@ export function useBookmarkCardActions({
 
       return { bookmarkId, previousBookmarks, previousDetail };
     },
-    onSuccess: async () => {
+    onSuccess: async (deletedBookmark) => {
       toast.success("Bookmark deleted permanently");
-      await router.invalidate();
+      await deleteBookmarkFromCache(deletedBookmark.id);
+      await syncTagsFromServer();
+      await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
+      await queryClient.invalidateQueries({ queryKey: ["tags"] });
     },
     onError: (_error, _bookmarkId, context) => {
       if (context) {
