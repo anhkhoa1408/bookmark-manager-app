@@ -17,6 +17,7 @@ import { auth as firebaseAuth } from "@/lib/firebase/firebase";
 import type { ParsedBookmarkImport } from "@/lib/bookmark-import";
 import { clearBookmarkCache, syncBookmarkToCache } from "@/lib/cache/bookmark-cache";
 import { clearTagCache, syncTagsFromServer } from "@/lib/cache/tag-cache";
+import { ImportJobStatus } from "@/model/import";
 import { createBookmark } from "@/server/bookmarks";
 import { createImportJob, getImportJob } from "@/server/importJobs";
 
@@ -26,6 +27,7 @@ export default function Header() {
   const { searchTerm, onSearchTermChange } = useBookmarkFilters();
   const { data: session } = authClient.useSession();
   const [activeImportJobId, setActiveImportJobId] = useState<string | null>(null);
+  const [hasShownImportProcessingToast, setHasShownImportProcessingToast] = useState(false);
   const createBookmarkMutation = useMutation({
     mutationFn: (values: BookmarkFormValues) => createBookmark({ data: values }),
     onSuccess: async (bookmark) => {
@@ -43,6 +45,7 @@ export default function Header() {
     mutationFn: (bookmarks: ParsedBookmarkImport[]) => createImportJob({ data: { bookmarks } }),
     onSuccess: (job) => {
       setActiveImportJobId(job.id);
+      setHasShownImportProcessingToast(false);
       toast.success(`Import queued for ${job.totalCount.toLocaleString("en")} bookmarks`);
     },
     onError: () => {
@@ -63,8 +66,14 @@ export default function Header() {
             return;
           }
 
-          if (job.status === "succeeded") {
+          if (job.status === ImportJobStatus.Processing && !hasShownImportProcessingToast) {
+            setHasShownImportProcessingToast(true);
+            toast.info("Bookmark import is now processing");
+          }
+
+          if (job.status === ImportJobStatus.Succeeded) {
             setActiveImportJobId(null);
+            setHasShownImportProcessingToast(false);
             toast.success(`Imported ${job.importedCount.toLocaleString("en")} bookmarks`);
             await clearBookmarkCache();
             await syncTagsFromServer();
@@ -72,8 +81,9 @@ export default function Header() {
             await queryClient.invalidateQueries({ queryKey: ["tags"] });
           }
 
-          if (job.status === "failed") {
+          if (job.status === ImportJobStatus.Failed) {
             setActiveImportJobId(null);
+            setHasShownImportProcessingToast(false);
             toast.error(job.lastError ?? "Bookmark import failed");
             await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
             await queryClient.invalidateQueries({ queryKey: ["tags"] });
@@ -85,13 +95,13 @@ export default function Header() {
             setActiveImportJobId(null);
           }
         });
-    }, 6000);
+    }, 30_000);
 
     return () => {
       isActive = false;
       window.clearInterval(intervalId);
     };
-  }, [activeImportJobId, queryClient]);
+  }, [activeImportJobId, hasShownImportProcessingToast, queryClient]);
 
   const handleLogout = async () => {
     await Promise.allSettled([clearBookmarkCache(), clearTagCache()]);

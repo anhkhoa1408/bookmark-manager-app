@@ -1,13 +1,11 @@
 import { auth } from "@/lib/firebase/auth";
+import { ImportJobChunkStatus, ImportJobStatus } from "@/model/import";
 import { sendEmail } from "@/lib/resend/email";
 import { firestoreService, type BaseFirestoreDocument, type FirestoreDocument } from "@/lib/firebase/firestoreService";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import { Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
-
-type ImportJobStatus = "queued" | "processing" | "succeeded" | "failed";
-type ImportJobChunkStatus = "queued" | "processing" | "succeeded" | "failed";
 
 type ImportBookmarkInput = {
   title: string;
@@ -220,7 +218,7 @@ export const createImportJob = createServerFn({
     const job = await importJobsRepository.insertWithGeneratedId({
       userId: user.id,
       userEmail: user.email,
-      status: "queued",
+      status: ImportJobStatus.Queued,
       totalCount: data.bookmarks.length,
       importedCount: 0,
       failedCount: 0,
@@ -235,7 +233,7 @@ export const createImportJob = createServerFn({
         jobId: job.id,
         userId: user.id,
         index,
-        status: "queued",
+        status: ImportJobChunkStatus.Queued,
         bookmarks,
         totalCount: bookmarks.length,
         importedCount: 0,
@@ -263,7 +261,7 @@ export const getImportJob = createServerFn({
       throw new Response("NOT_FOUND", { status: 404 });
     }
 
-    if (job.status === "queued") {
+    if (job.status === ImportJobStatus.Queued) {
       startImportJobProcessing(job.id);
     }
 
@@ -273,12 +271,17 @@ export const getImportJob = createServerFn({
 export async function processImportJobById(jobId: string) {
   const job = await importJobsRepository.findById(jobId);
 
-  if (!job || job.deleted || job.status === "succeeded" || job.status === "failed") {
+  if (
+    !job ||
+    job.deleted ||
+    job.status === ImportJobStatus.Succeeded ||
+    job.status === ImportJobStatus.Failed
+  ) {
     return;
   }
 
   await importJobsRepository.update(job.id, {
-    status: "processing",
+    status: ImportJobStatus.Processing,
     startedAt: job.startedAt ?? Timestamp.now(),
   });
 
@@ -288,7 +291,10 @@ export async function processImportJobById(jobId: string) {
     { field: "deleted", operator: "==", value: false },
   ]);
   const queuedChunks = chunks
-    .filter((chunk) => chunk.status === "queued" || chunk.status === "failed")
+    .filter(
+      (chunk) =>
+        chunk.status === ImportJobChunkStatus.Queued || chunk.status === ImportJobChunkStatus.Failed,
+    )
     .sort((firstChunk, secondChunk) => firstChunk.index - secondChunk.index);
   const existingTags = await tagsRepository.findMany([
     { field: "userId", operator: "==", value: job.userId },
@@ -311,7 +317,7 @@ export async function processImportJobById(jobId: string) {
   const failedChunk = refreshedChunks.find((chunk) => chunk.status === "failed");
 
   await importJobsRepository.update(job.id, {
-    status: failedChunk ? "failed" : "succeeded",
+    status: failedChunk ? ImportJobStatus.Failed : ImportJobStatus.Succeeded,
     importedCount,
     failedCount,
     processedChunkCount,
@@ -326,7 +332,7 @@ async function processImportJobChunk(
   tagsBySlug: Map<string, FirestoreDocument<TagDocument>>,
 ) {
   await importJobChunksRepository.update(chunk.id, {
-    status: "processing",
+    status: ImportJobChunkStatus.Processing,
     startedAt: Timestamp.now(),
     error: undefined,
   });
@@ -349,7 +355,7 @@ async function processImportJobChunk(
     }
 
     await importJobChunksRepository.update(chunk.id, {
-      status: "succeeded",
+      status: ImportJobChunkStatus.Succeeded,
       importedCount: chunk.bookmarks.length,
       failedCount: 0,
       completedAt: Timestamp.now(),
@@ -371,7 +377,7 @@ async function processImportJobChunk(
     const message = caughtError instanceof Error ? caughtError.message : "Could not import this bookmark chunk.";
 
     await importJobChunksRepository.update(chunk.id, {
-      status: "failed",
+      status: ImportJobChunkStatus.Failed,
       importedCount: 0,
       failedCount: chunk.bookmarks.length,
       error: message,
