@@ -16,6 +16,7 @@ export type ActionDropdownItem = {
 
 type ActionDropdownProps = {
   triggerLabel: React.ReactNode;
+  triggerAriaLabel?: string;
   items: ActionDropdownItem[];
   align?: React.ComponentProps<typeof DropdownMenuContent>["align"];
   className?: string;
@@ -25,16 +26,21 @@ type ActionDropdownProps = {
 
 export function ActionDropdown({
   triggerLabel,
+  triggerAriaLabel,
   items,
   align = "end",
   className,
   contentClassName,
   onSelect,
 }: ActionDropdownProps) {
+  const renderActionDropdownItem = (item: ActionDropdownItem) => (
+    <ActionDropdownMenuItem key={item.value} item={item} onSelect={onSelect} />
+  );
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="secondary" className={className}>
+        <Button type="button" variant="secondary" className={className} aria-label={triggerAriaLabel}>
           {triggerLabel}
         </Button>
       </DropdownMenuTrigger>
@@ -46,9 +52,7 @@ export function ActionDropdown({
           contentClassName,
         )}
       >
-        {items.map((item) => (
-          <ActionDropdownMenuItem key={item.value} item={item} onSelect={onSelect} />
-        ))}
+        {items.map(renderActionDropdownItem)}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -62,6 +66,9 @@ function ActionDropdownMenuItem({
   onSelect?: (value: string) => void;
 }) {
   const { Icon, checked = false, disabled = false, label, showCheck = true, value } = item;
+  const handleSelect = () => {
+    onSelect?.(value);
+  };
 
   return (
     <DropdownMenuItem
@@ -71,7 +78,7 @@ function ActionDropdownMenuItem({
         "min-h-40 cursor-pointer rounded-6 px-8 py-10 text-preset-4 text-neutral-800 outline-hidden transition-colors focus:bg-neutral-100 focus:text-neutral-900 dark:text-neutral-dark-100 dark:focus:bg-neutral-dark-600 dark:focus:text-neutral-0",
         Icon ? "gap-10" : "gap-0",
       )}
-      onSelect={() => onSelect?.(value)}
+      onSelect={handleSelect}
     >
       {Icon ? <Icon className="size-16 shrink-0" aria-hidden="true" /> : null}
       <span className="min-w-0 flex-1 truncate">{label}</span>

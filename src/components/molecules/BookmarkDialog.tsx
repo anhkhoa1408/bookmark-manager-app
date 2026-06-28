@@ -25,8 +25,8 @@ export type BookmarkFormValues = z.infer<typeof bookmarkFormSchema>;
 type BookmarkDialogProps = {
   title: string;
   description: string;
-  submitLabel: string;
-  triggerLabel: React.ReactNode;
+  submitLabel?: string;
+  triggerLabel?: React.ReactNode;
   defaultValues?: BookmarkFormValues;
   defaultOpen?: boolean;
   open?: boolean;
@@ -44,7 +44,7 @@ const defaultBookmarkValues: BookmarkFormValues = {
 export function BookmarkDialog({
   title,
   description,
-  submitLabel,
+  submitLabel = "Save Bookmark",
   triggerLabel,
   defaultValues,
   defaultOpen,
@@ -53,30 +53,54 @@ export function BookmarkDialog({
   onSubmit,
 }: BookmarkDialogProps) {
   const [internalOpen, setInternalOpen] = React.useState(defaultOpen ?? false);
-  const resolvedOpen = open ?? internalOpen;
-  const setOpen = onOpenChange ?? setInternalOpen;
-
-  const form = useForm({
-    defaultValues: {
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const resolvedDefaultValues = React.useMemo(
+    () => ({
       ...defaultBookmarkValues,
       ...defaultValues,
-    },
+    }),
+    [defaultValues],
+  );
+  const resolvedOpen = open ?? internalOpen;
+  const setOpen = (nextOpen: boolean) => {
+    if (nextOpen) {
+      setSubmitError(null);
+    }
+
+    (onOpenChange ?? setInternalOpen)(nextOpen);
+  };
+
+  const form = useForm({
+    defaultValues: resolvedDefaultValues,
     validators: {
       onChange: bookmarkFormSchema,
       onBlur: bookmarkFormSchema,
     },
     onSubmit: async (values) => {
-      await onSubmit?.(values.value);
-      setOpen(false);
-      form.reset();
+      try {
+        setSubmitError(null);
+        await onSubmit?.(values.value);
+        setOpen(false);
+        form.reset();
+      } catch (error) {
+        setSubmitError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+      }
     },
   });
 
+  React.useEffect(() => {
+    if (resolvedOpen) {
+      form.reset(resolvedDefaultValues);
+    }
+  }, [form, resolvedDefaultValues, resolvedOpen]);
+
   return (
     <Dialog.Root open={resolvedOpen} onOpenChange={setOpen}>
-      <Dialog.Trigger asChild>
-        <Button type="button">{triggerLabel}</Button>
-      </Dialog.Trigger>
+      {triggerLabel ? (
+        <Dialog.Trigger asChild>
+          <Button type="button">{triggerLabel}</Button>
+        </Dialog.Trigger>
+      ) : null}
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-neutral-900/40 backdrop-blur-[1px] dark:bg-neutral-dark-900/55" />
         <Dialog.Content
@@ -86,10 +110,10 @@ export function BookmarkDialog({
           )}
         >
           <div className="flex w-full flex-col gap-8 pr-48 dark:gap-10">
-              <Dialog.Title className="text-preset-1 text-neutral-900 dark:text-neutral-0">{title}</Dialog.Title>
-              <Dialog.Description className="text-preset-4m text-neutral-800 dark:text-neutral-dark-100">
-                {description}
-              </Dialog.Description>
+            <Dialog.Title className="text-preset-1 text-neutral-900 dark:text-neutral-0">{title}</Dialog.Title>
+            <Dialog.Description className="text-preset-4m text-neutral-800 dark:text-neutral-dark-100">
+              {description}
+            </Dialog.Description>
           </div>
           <Dialog.Close asChild>
             <Button
@@ -208,6 +232,11 @@ export function BookmarkDialog({
             </div>
 
             <div className="flex flex-col-reverse gap-16 sm:flex-row sm:justify-end">
+              {submitError ? (
+                <p className="text-preset-4m text-red-600 sm:mr-auto" role="alert">
+                  {submitError}
+                </p>
+              ) : null}
               <Dialog.Close asChild>
                 <Button type="button" variant="secondary" className="border">
                   Cancel

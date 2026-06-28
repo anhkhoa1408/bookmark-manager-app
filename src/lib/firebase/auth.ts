@@ -19,7 +19,7 @@ const firebaseAuthPlugin = (): BetterAuthPlugin => ({
         decoded = await decodeToken({
           data: body.idToken,
         });
-      } catch (err) {
+      } catch {
         throw new Response("UNAUTHORIZED", { status: 401 });
       }
 
@@ -49,7 +49,7 @@ const firebaseAuthPlugin = (): BetterAuthPlugin => ({
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    expiresIn: 60 * 60 * 24 * 7,
   },
   socialProviders: {
     google: {

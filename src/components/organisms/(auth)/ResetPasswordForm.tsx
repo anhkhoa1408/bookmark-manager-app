@@ -9,7 +9,7 @@ import { Field, FieldError, FieldLabel } from "../../atoms/field";
 import { Input } from "../../atoms/input";
 import { Logo } from "../../molecules/Logo";
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase/firebase";
 
 const resetPasswordFormSchema = z
   .object({

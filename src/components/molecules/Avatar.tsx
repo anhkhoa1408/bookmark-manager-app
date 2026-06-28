@@ -1,4 +1,4 @@
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase/firebase";
 import { UserIcon } from "lucide-react";
 import { useEffect } from "react";
 

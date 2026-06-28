@@ -15,19 +15,19 @@ import { getBookmarksPage, type BookmarkListItem, type BookmarksPage } from "@/s
 
 const BOOKMARKS_PAGE_SIZE = 30;
 
-export const Route = createFileRoute("/_main/home")({
+export const Route = createFileRoute("/_main/archived")({
   loader: async () => {
     try {
       return {
-        page: await getBookmarksPage({ data: { archived: false, limit: BOOKMARKS_PAGE_SIZE } }),
+        page: await getBookmarksPage({ data: { archived: true, limit: BOOKMARKS_PAGE_SIZE } }),
         loadError: null,
       };
     } catch (error) {
-      console.error("Could not load bookmarks.", error);
+      console.error("Could not load archived bookmarks.", error);
 
       return {
         page: createEmptyBookmarksPage(),
-        loadError: "Could not load bookmarks right now.",
+        loadError: "Could not load archived bookmarks right now.",
       };
     }
   },
@@ -53,11 +53,11 @@ function RouteComponent() {
   const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const bookmarksQuery = useInfiniteQuery({
-    queryKey: ["bookmarks", "active"],
+    queryKey: ["bookmarks", "archived"],
     queryFn: ({ pageParam }) =>
       getBookmarksPage({
         data: {
-          archived: false,
+          archived: true,
           cursor: pageParam,
           limit: BOOKMARKS_PAGE_SIZE,
         },
@@ -78,7 +78,7 @@ function RouteComponent() {
   const bookmarkCardActions = useBookmarkCardActions({
     bookmarks,
     setBookmarks,
-    archiveMode: "active",
+    archiveMode: "archived",
     selectedBookmarkId,
     setSelectedBookmarkId,
     isDetailOpen,
@@ -123,8 +123,11 @@ function RouteComponent() {
         onCopyUrl={bookmarkCardActions.handleCopyBookmarkUrl}
         onTogglePin={bookmarkCardActions.handleTogglePin}
         onArchive={bookmarkCardActions.handleArchiveStateChange}
+        onUnarchive={bookmarkCardActions.handleArchiveStateChange}
+        onDeletePermanently={bookmarkCardActions.handleDeletePermanently}
         isTogglingPin={bookmarkCardActions.isTogglingPin(bookmark.id)}
-        isArchiving={bookmarkCardActions.isChangingArchiveState(bookmark.id)}
+        isUnarchiving={bookmarkCardActions.isChangingArchiveState(bookmark.id)}
+        isDeletingPermanently={bookmarkCardActions.isDeletingPermanently(bookmark.id)}
       />
     ),
     [bookmarkCardActions],
@@ -133,7 +136,7 @@ function RouteComponent() {
   return (
     <main className="flex h-full min-h-0 flex-col gap-24 p-32">
       <div className="flex shrink-0 items-center justify-between gap-16">
-        <h1 className="text-preset-1 text-neutral-900 dark:text-neutral-0">All bookmarks</h1>
+        <h1 className="text-preset-1 text-neutral-900 dark:text-neutral-0">Archived bookmarks</h1>
         <ActionDropdown
           triggerLabel={
             <>
@@ -148,7 +151,7 @@ function RouteComponent() {
       </div>
       {loadError ? (
         <Card className="items-center gap-12 py-48 text-center dark:bg-neutral-dark-800">
-          <CardTitle className="text-neutral-900 dark:text-neutral-0">Could not load bookmarks</CardTitle>
+          <CardTitle className="text-neutral-900 dark:text-neutral-0">Could not load archived bookmarks</CardTitle>
           <p className="max-w-md text-preset-4m text-neutral-800 dark:text-neutral-dark-100">
             The server returned an error. You can retry without leaving this page.
           </p>
@@ -176,22 +179,22 @@ function RouteComponent() {
         </>
       ) : bookmarks.length > 0 ? (
         <Card className="items-center gap-12 py-48 text-center dark:bg-neutral-dark-800">
-          <CardTitle className="text-neutral-900 dark:text-neutral-0">No bookmarks match your filters</CardTitle>
+          <CardTitle className="text-neutral-900 dark:text-neutral-0">No archived bookmarks match your filters</CardTitle>
           <p className="max-w-md text-preset-4m text-neutral-800 dark:text-neutral-dark-100">
             Try another title search or uncheck a tag to broaden the list.
           </p>
         </Card>
       ) : (
         <Card className="items-center gap-12 py-48 text-center dark:bg-neutral-dark-800">
-          <CardTitle className="text-neutral-900 dark:text-neutral-0">No bookmarks yet</CardTitle>
+          <CardTitle className="text-neutral-900 dark:text-neutral-0">No archived bookmarks</CardTitle>
           <p className="max-w-md text-preset-4m text-neutral-800 dark:text-neutral-dark-100">
-            Add your first bookmark to start building a searchable collection.
+            Archived bookmarks will appear here when you move them out of your active list.
           </p>
         </Card>
       )}
       <BookmarkDialog
         title="Edit bookmark"
-        description="Update your saved link details — change the title, description, URL, or tags anytime."
+        description="Update your saved link details - change the title, description, URL, or tags anytime."
         submitLabel="Save Bookmark"
         open={isDetailOpen}
         onOpenChange={bookmarkCardActions.handleDetailOpenChange}

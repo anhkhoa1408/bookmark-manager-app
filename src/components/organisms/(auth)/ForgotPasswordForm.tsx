@@ -1,4 +1,4 @@
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase/firebase";
 import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
 import { sendPasswordResetEmail } from "firebase/auth";

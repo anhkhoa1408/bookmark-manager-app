@@ -10,7 +10,9 @@ export type ConfirmDialogProps = {
   description: string;
   ctaLabel: string;
   onConfirm: () => void | Promise<void>;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   danger?: boolean;
 };
 
@@ -20,27 +22,33 @@ export function ConfirmDialog({
   ctaLabel,
   onConfirm,
   trigger,
+  open,
+  onOpenChange,
   danger = false,
 }: ConfirmDialogProps) {
+  const [internalOpen, setInternalOpen] = React.useState(false);
   const [isConfirming, setIsConfirming] = React.useState(false);
+  const resolvedOpen = open ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
 
   const handleConfirm = async () => {
     try {
       setIsConfirming(true);
       await onConfirm();
+      setOpen(false);
     } finally {
       setIsConfirming(false);
     }
   };
 
   return (
-    <Dialog.Root>
-      <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
+    <Dialog.Root open={resolvedOpen} onOpenChange={setOpen}>
+      {trigger ? <Dialog.Trigger asChild>{trigger}</Dialog.Trigger> : null}
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 bg-neutral-900/40 backdrop-blur-[1px] dark:bg-neutral-dark-900/55" />
         <Dialog.Content
           className={cn(
-            "fixed left-1/2 top-1/2 flex max-h-[calc(100dvh-2rem)] w-[min(92vw,450px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-24 overflow-auto rounded-12 border border-transparent bg-neutral-0 p-24 shadow-[0_24px_64px_rgba(5,21,19,0.18)] outline-none",
+            "fixed left-1/2 top-1/2 flex max-h-[calc(100dvh-2rem)] w-[min(100vw,450px)] -translate-x-1/2 -translate-y-1/2 flex-col gap-24 overflow-auto rounded-12 border border-transparent bg-neutral-0 p-24 shadow-[0_24px_64px_rgba(5,21,19,0.18)] outline-none",
             "dark:border-neutral-dark-500 dark:bg-neutral-dark-800 dark:shadow-[0_24px_64px_rgba(0,0,0,0.35)]",
           )}
         >
@@ -54,7 +62,7 @@ export function ConfirmDialog({
           <Dialog.Close asChild>
             <button
               type="button"
-              className="absolute right-14 top-14 flex size-20 cursor-pointer items-center justify-center text-neutral-900 outline-none transition-colors hover:text-neutral-800 focus-visible:ring-2 focus-visible:ring-teal-700 disabled:pointer-events-none disabled:opacity-50 dark:text-neutral-0 dark:hover:text-neutral-dark-100 dark:focus-visible:ring-neutral-dark-100"
+              className="absolute right-20 top-20 flex size-20 cursor-pointer items-center justify-center text-neutral-900 outline-none transition-colors hover:text-neutral-800 focus-visible:ring-2 focus-visible:ring-teal-700 disabled:pointer-events-none disabled:opacity-50 dark:text-neutral-0 dark:hover:text-neutral-dark-100 dark:focus-visible:ring-neutral-dark-100"
               aria-label="Close dialog"
               disabled={isConfirming}
             >

@@ -1,4 +1,4 @@
-import { adminAuth } from "@/lib/firebase-admin";
+import { adminAuth } from "@/lib/firebase/firebase-admin";
 import { createServerFn } from "@tanstack/react-start";
 import { DecodedIdToken } from "node_modules/firebase-admin/lib/auth/token-verifier";
 

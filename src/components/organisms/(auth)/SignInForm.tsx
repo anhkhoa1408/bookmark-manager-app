@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Field, FieldError, FieldLabel } from "@/components/atoms/field";
 import { Input } from "@/components/atoms/input";
 import { Logo } from "@/components/molecules/Logo";
-import { auth } from "@/lib/firebase";
+import { auth } from "@/lib/firebase/firebase";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { FirebaseError } from "firebase/app";
