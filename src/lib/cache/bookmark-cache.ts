@@ -1,4 +1,5 @@
 import { bookmarkIndexedDbService } from "@/lib/index-db/bookmark-indexed-db";
+import { syncTagBookmarkCountsFromCache } from "@/lib/cache/tag-cache";
 import { getAllBookmarks, getArchivedBookmarks, type BookmarkListItem } from "@/server/bookmarks";
 
 type BookmarkParams = {
@@ -25,14 +26,16 @@ export async function syncBookmarksFromServer({ archived }: BookmarkParams) {
 
 export async function syncBookmarksToCache(bookmarks: BookmarkListItem[]) {
   await bookmarkIndexedDbService.upsertBookmarks(bookmarks);
+  await syncTagBookmarkCountsFromCache();
 }
 
 export async function syncBookmarkToCache(bookmark: BookmarkListItem) {
-  await bookmarkIndexedDbService.upsertBookmarks([bookmark]);
+  await syncBookmarksToCache([bookmark]);
 }
 
 export async function deleteBookmarkFromCache(bookmarkId: string) {
   await bookmarkIndexedDbService.deleteBookmarks([bookmarkId]);
+  await syncTagBookmarkCountsFromCache();
 }
 
 export async function clearBookmarkCache() {

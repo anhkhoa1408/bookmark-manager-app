@@ -1,3 +1,4 @@
+import { bookmarkIndexedDbService } from "@/lib/index-db/bookmark-indexed-db";
 import { tagIndexedDbService } from "@/lib/index-db/tag-indexed-db";
 import { getTags, type TagOption } from "@/server/tags";
 
@@ -5,7 +6,7 @@ export async function getTagsCacheFirst() {
   const cachedTags = await tagIndexedDbService.getAllTags();
 
   if (cachedTags.length > 0) {
-    return sortTags(cachedTags);
+    return sortTags(await countTagBookmarksFromCache(cachedTags));
   }
 
   return syncTagsFromServer();
@@ -17,14 +18,45 @@ export async function syncTagsToCache(tags: TagOption[]) {
 
 export async function syncTagsFromServer() {
   const tags = await getTags();
-  await tagIndexedDbService.clearTags();
-  await syncTagsToCache(tags);
+  const tagsWithBookmarkCounts = await countTagBookmarksFromCache(tags);
 
-  return sortTags(tags);
+  await tagIndexedDbService.clearTags();
+  await syncTagsToCache(tagsWithBookmarkCounts);
+
+  return sortTags(tagsWithBookmarkCounts);
 }
 
 export async function clearTagCache() {
   await tagIndexedDbService.clearTags();
+}
+
+export async function syncTagBookmarkCountsFromCache() {
+  const cachedTags = await tagIndexedDbService.getAllTags();
+
+  if (cachedTags.length === 0) {
+    return [];
+  }
+
+  const tagsWithBookmarkCounts = await countTagBookmarksFromCache(cachedTags);
+  await syncTagsToCache(tagsWithBookmarkCounts);
+
+  return sortTags(tagsWithBookmarkCounts);
+}
+
+export async function countTagBookmarksFromCache(tags: TagOption[]) {
+  const cachedBookmarks = await bookmarkIndexedDbService.getAllBookmarks();
+  const bookmarkCountsByTagId = cachedBookmarks.reduce((countsByTagId, bookmark) => {
+    for (const tag of bookmark.tags) {
+      countsByTagId.set(tag.id, (countsByTagId.get(tag.id) ?? 0) + 1);
+    }
+
+    return countsByTagId;
+  }, new Map<string, number>());
+
+  return tags.map((tag) => ({
+    ...tag,
+    bookmarkCount: bookmarkCountsByTagId.get(tag.id) ?? 0,
+  }));
 }
 
 function sortTags(tags: TagOption[]) {
