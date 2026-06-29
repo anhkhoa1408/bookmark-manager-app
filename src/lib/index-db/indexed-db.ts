@@ -30,6 +30,20 @@ export abstract class IndexedDbStoreService {
     await this.wrapTransaction(transaction);
   }
 
+  protected async replaceAll<TValue>(storeName: StoreName, values: TValue[]) {
+    const db = await this.getDb();
+    const transaction = db.transaction(storeName, "readwrite");
+    const store = transaction.objectStore(storeName);
+
+    store.clear();
+
+    for (const value of values) {
+      store.put(value);
+    }
+
+    await this.wrapTransaction(transaction);
+  }
+
   protected async deleteMany(storeName: StoreName, keys: IDBValidKey[]) {
     if (keys.length === 0) {
       return;

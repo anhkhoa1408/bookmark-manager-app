@@ -15,7 +15,7 @@ import { authClient } from "@/lib/firebase/auth-client";
 import { useBookmarkFilters } from "@/lib/contexts/bookmark-filters";
 import { auth as firebaseAuth } from "@/lib/firebase/firebase";
 import type { ParsedBookmarkImport } from "@/lib/bookmark-import";
-import { clearBookmarkCache, syncBookmarkToCache } from "@/lib/cache/bookmark-cache";
+import { clearBookmarkCache, syncBookmarkToCache, syncBookmarksFromServer } from "@/lib/cache/bookmark-cache";
 import { clearTagCache, syncTagsFromServer } from "@/lib/cache/tag-cache";
 import { ImportJobStatus } from "@/model/import";
 import { createBookmark } from "@/server/bookmarks";
@@ -75,8 +75,7 @@ export default function Header() {
             setActiveImportJobId(null);
             setHasShownImportProcessingToast(false);
             toast.success(`Imported ${job.importedCount.toLocaleString("en")} bookmarks`);
-            await clearBookmarkCache();
-            await syncTagsFromServer();
+            await Promise.allSettled([syncBookmarksFromServer({ archived: false }), syncTagsFromServer()]);
             await queryClient.invalidateQueries({ queryKey: ["bookmarks"] });
             await queryClient.invalidateQueries({ queryKey: ["tags"] });
           }

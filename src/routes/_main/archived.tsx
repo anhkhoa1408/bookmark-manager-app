@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowDownUpIcon, RefreshCwIcon } from "lucide-react";
+import { ArrowDownUpIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { Button } from "@/components/atoms/button";
 import { Card, CardTitle } from "@/components/atoms/card";
 import { ActionDropdown, type ActionDropdownItem } from "@/components/molecules/ActionDropdown";
 import { BookmarkCard } from "@/components/molecules/BookmarkCard";
@@ -34,7 +33,7 @@ const sortOptions = [
 function RouteComponent() {
   const { bookmarks: loaderBookmarks } = Route.useLoaderData();
   const { searchTerm, selectedTagIds } = useBookmarkFilters();
-  const [bookmarks, setBookmarks] = useState(loaderBookmarks);
+  const [bookmarks, setBookmarks] = useState<BookmarkListItem[]>(loaderBookmarks);
   const [selectedSort, setSelectedSort] = useState<BookmarkSort>("recently-added");
   const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -130,12 +129,8 @@ function RouteComponent() {
         <Card className="items-center gap-12 py-48 text-center dark:bg-neutral-dark-800">
           <CardTitle className="text-neutral-900 dark:text-neutral-0">Could not load archived bookmarks</CardTitle>
           <p className="max-w-md text-preset-4m text-neutral-800 dark:text-neutral-dark-100">
-            The server returned an error. You can retry without leaving this page.
+            The server returned an error. Your cached bookmarks are preserved for the next load.
           </p>
-          <Button type="button" variant="secondary" className="border" onClick={() => void bookmarksQuery.refetch()}>
-            <RefreshCwIcon className="size-20" aria-hidden="true" />
-            Retry
-          </Button>
         </Card>
       ) : bookmarks.length > 0 && filteredBookmarks.length > 0 ? (
         <VirtualBookmarkGrid bookmarks={filteredBookmarks} renderBookmarkCard={renderBookmarkCard} />

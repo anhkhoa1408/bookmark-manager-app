@@ -10,6 +10,10 @@ class TagIndexedDbService extends IndexedDbStoreService {
     await this.putMany("tags", tags);
   }
 
+  async replaceTags(tags: TagOption[]) {
+    await this.replaceAll("tags", tags);
+  }
+
   async deleteTags(tagIds: string[]) {
     await this.deleteMany("tags", tagIds);
   }
