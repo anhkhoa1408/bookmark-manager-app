@@ -1,5 +1,5 @@
 const DATABASE_NAME = "bookmark-manager-cache";
-const DATABASE_VERSION = 1;
+const DATABASE_VERSION = 2;
 
 type StoreName = "bookmarks" | "tags";
 

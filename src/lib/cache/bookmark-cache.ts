@@ -1,40 +1,26 @@
 import { bookmarkIndexedDbService } from "@/lib/index-db/bookmark-indexed-db";
-import { getBookmarksPage, type BookmarkListItem, type BookmarksPage } from "@/server/bookmarks";
+import { getAllBookmarks, getArchivedBookmarks, type BookmarkListItem } from "@/server/bookmarks";
 
-type BookmarkPageParams = {
+type BookmarkParams = {
   archived: boolean;
-  cursor?: string | null;
-  limit: number;
 };
 
-export async function getBookmarksPageCacheFirst({ archived, cursor, limit }: BookmarkPageParams) {
-  if (!cursor) {
-    const cachedBookmarks = await bookmarkIndexedDbService.getAllBookmarks();
-    const matchingBookmarks = cachedBookmarks
-      .filter((bookmark) => bookmark.archived === archived)
-      .sort((firstBookmark, secondBookmark) => compareDates(secondBookmark.createdAt, firstBookmark.createdAt));
+export async function getBookmarksAndSyncCache({ archived }: BookmarkParams) {
+  const cachedBookmarks = await bookmarkIndexedDbService.getAllBookmarks();
+  const matchingBookmarks = sortBookmarks(cachedBookmarks.filter((bookmark) => bookmark.archived === archived));
 
-    if (matchingBookmarks.length > 0) {
-      const pageBookmarks = matchingBookmarks.slice(0, limit);
-      const lastBookmark = pageBookmarks.at(-1);
-
-      return {
-        bookmarks: pageBookmarks,
-        nextCursor: matchingBookmarks.length >= limit && lastBookmark ? encodeBookmarkPageCursor(lastBookmark) : null,
-      } satisfies BookmarksPage;
-    }
+  if (matchingBookmarks.length > 0) {
+    return matchingBookmarks;
   }
 
-  const page = await getBookmarksPage({
-    data: {
-      archived,
-      cursor,
-      limit,
-    },
-  });
-  await syncBookmarksToCache(page.bookmarks);
+  return syncBookmarksFromServer({ archived });
+}
 
-  return page;
+export async function syncBookmarksFromServer({ archived }: BookmarkParams) {
+  const bookmarks = archived ? await getArchivedBookmarks() : await getAllBookmarks();
+  await syncBookmarksToCache(bookmarks);
+
+  return sortBookmarks(bookmarks);
 }
 
 export async function syncBookmarksToCache(bookmarks: BookmarkListItem[]) {
@@ -53,14 +39,15 @@ export async function clearBookmarkCache() {
   await bookmarkIndexedDbService.clearBookmarks();
 }
 
-function compareDates(firstDate: string, secondDate: string) {
-  return getDateTime(firstDate) - getDateTime(secondDate);
-}
+function sortBookmarks(bookmarks: BookmarkListItem[]) {
+  return [...bookmarks].sort((firstBookmark, secondBookmark) => {
+    const createdAtSort = getDateTime(secondBookmark.createdAt) - getDateTime(firstBookmark.createdAt);
 
-function encodeBookmarkPageCursor(bookmark: BookmarkListItem) {
-  return JSON.stringify({
-    createdAt: getDateTime(bookmark.createdAt),
-    id: bookmark.id,
+    if (createdAtSort !== 0) {
+      return createdAtSort;
+    }
+
+    return secondBookmark.id.localeCompare(firstBookmark.id);
   });
 }
 

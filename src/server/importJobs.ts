@@ -1,10 +1,8 @@
-import { auth } from "@/lib/firebase/auth";
 import { ImportJobChunkStatus, ImportJobStatus } from "@/model/import";
-import { sendEmail } from "@/lib/resend/email";
-import { firestoreService, type BaseFirestoreDocument, type FirestoreDocument } from "@/lib/firebase/firestoreService";
+import { getFirestoreService, type BaseFirestoreDocument, type FirestoreDocument } from "@/lib/firebase/firestoreService";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
-import { Timestamp } from "firebase-admin/firestore";
+import type { Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
 
 type ImportBookmarkInput = {
@@ -94,14 +92,17 @@ const importJobSchema = z.object({
   jobId: z.string().trim().min(1, "Import job id is required"),
 });
 
-const importJobsRepository = firestoreService.repository<ImportJobDocument>("importJobs");
-const importJobChunksRepository = firestoreService.repository<ImportJobChunkDocument>("importJobChunks");
-const bookmarksRepository = firestoreService.repository<BookmarkDocument>("bookmarks");
-const tagsRepository = firestoreService.repository<TagDocument>("tags");
 const activeImportJobIds = new Set<string>();
+
+const getImportJobsRepository = async () => (await getFirestoreService()).repository<ImportJobDocument>("importJobs");
+const getImportJobChunksRepository = async () =>
+  (await getFirestoreService()).repository<ImportJobChunkDocument>("importJobChunks");
+const getBookmarksRepository = async () => (await getFirestoreService()).repository<BookmarkDocument>("bookmarks");
+const getTagsRepository = async () => (await getFirestoreService()).repository<TagDocument>("tags");
 
 const getSessionUser = async () => {
   const headers = getRequestHeaders();
+  const { auth } = await import("@/lib/firebase/auth");
   const session = await auth.api.getSession({ headers });
 
   if (!session?.user?.id || !session.user.email) {
@@ -139,6 +140,7 @@ const resolveImportedTagIds = async (
   tagsBySlug: Map<string, FirestoreDocument<TagDocument>>,
 ) => {
   const tagNames = parseTagNamesFromList(tagsInput);
+  const tagsRepository = await getTagsRepository();
   const tagIds: string[] = [];
 
   for (const tagName of tagNames) {
@@ -208,6 +210,8 @@ export const createImportJob = createServerFn({
   .validator((data) => importBookmarksSchema.parse(data))
   .handler(async ({ data }): Promise<ImportJobSummary> => {
     const user = await getSessionUser();
+    const importJobsRepository = await getImportJobsRepository();
+    const importJobChunksRepository = await getImportJobChunksRepository();
     const chunks = chunkBookmarks(
       data.bookmarks.map((bookmark) => ({
         title: bookmark.title.trim(),
@@ -255,6 +259,7 @@ export const getImportJob = createServerFn({
   .validator((data) => importJobSchema.parse(data))
   .handler(async ({ data }): Promise<ImportJobSummary> => {
     const user = await getSessionUser();
+    const importJobsRepository = await getImportJobsRepository();
     const job = await importJobsRepository.findById(data.jobId);
 
     if (!job || job.userId !== user.id || job.deleted) {
@@ -269,6 +274,10 @@ export const getImportJob = createServerFn({
   });
 
 export async function processImportJobById(jobId: string) {
+  const importJobsRepository = await getImportJobsRepository();
+  const importJobChunksRepository = await getImportJobChunksRepository();
+  const tagsRepository = await getTagsRepository();
+  const { Timestamp } = await import("firebase-admin/firestore");
   const job = await importJobsRepository.findById(jobId);
 
   if (
@@ -331,6 +340,10 @@ async function processImportJobChunk(
   chunk: FirestoreDocument<ImportJobChunkDocument>,
   tagsBySlug: Map<string, FirestoreDocument<TagDocument>>,
 ) {
+  const importJobChunksRepository = await getImportJobChunksRepository();
+  const bookmarksRepository = await getBookmarksRepository();
+  const { Timestamp } = await import("firebase-admin/firestore");
+
   await importJobChunksRepository.update(chunk.id, {
     status: ImportJobChunkStatus.Processing,
     startedAt: Timestamp.now(),
@@ -398,6 +411,7 @@ async function sendImportChunkSuccessEmail(
     `Imported bookmarks in this chunk: ${importedCount}`,
     `Total bookmarks in the import job: ${job.totalCount}`,
   ].join("\n");
+  const { sendEmail } = await import("@/lib/resend/email");
 
   await sendEmail({
     to: job.userEmail,

@@ -1,5 +1,4 @@
-import { auth } from "@/lib/firebase/auth";
-import { firestoreService, type BaseFirestoreDocument, type FirestoreDocument } from "@/lib/firebase/firestoreService";
+import { getFirestoreService, type BaseFirestoreDocument, type FirestoreDocument } from "@/lib/firebase/firestoreService";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 
@@ -18,18 +17,20 @@ export type TagOption = {
   bookmarkCount?: number;
 };
 
-const tagsRepository = firestoreService.repository<TagDocument>("tags");
+const getTagsRepository = async () => (await getFirestoreService()).repository<TagDocument>("tags");
 
 export const getTags = createServerFn({
   method: "GET",
 }).handler(async (): Promise<TagOption[]> => {
   const headers = getRequestHeaders();
+  const { auth } = await import("@/lib/firebase/auth");
   const session = await auth.api.getSession({ headers });
 
   if (!session?.user?.id) {
     throw new Response("UNAUTHORIZED", { status: 401 });
   }
 
+  const tagsRepository = await getTagsRepository();
   const tags = await tagsRepository.findMany([
     { field: "userId", operator: "==", value: session.user.id },
     { field: "deleted", operator: "==", value: false },

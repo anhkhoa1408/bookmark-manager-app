@@ -1,8 +1,11 @@
-import { auth } from "@/lib/firebase/auth";
-import { firestoreService, type BaseFirestoreDocument, type FirestoreDocument } from "@/lib/firebase/firestoreService";
+import {
+  getFirestoreService,
+  type BaseFirestoreDocument,
+  type FirestoreDocument,
+} from "@/lib/firebase/firestoreService";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
-import { FieldPath, FieldValue, Timestamp } from "firebase-admin/firestore";
+import type { Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
 
 type BookmarkDocument = BaseFirestoreDocument & {
@@ -42,11 +45,6 @@ export type BookmarkListItem = {
   updatedAt: string;
 };
 
-export type BookmarksPage = {
-  bookmarks: BookmarkListItem[];
-  nextCursor: string | null;
-};
-
 const createBookmarkSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
   description: z
@@ -75,12 +73,6 @@ const bookmarkDetailSchema = z.object({
   id: z.string().trim().min(1, "Bookmark id is required"),
 });
 
-const bookmarksPageSchema = z.object({
-  archived: z.boolean(),
-  cursor: z.string().trim().min(1).nullable().optional(),
-  limit: z.number().int().min(1).max(60).optional(),
-});
-
 const updateBookmarkSchema = createBookmarkSchema.extend({
   id: z.string().trim().min(1, "Bookmark id is required"),
 });
@@ -89,13 +81,12 @@ const bookmarkActionSchema = z.object({
   id: z.string().trim().min(1, "Bookmark id is required"),
 });
 
-const bookmarksRepository = firestoreService.repository<BookmarkDocument>("bookmarks");
-const tagsRepository = firestoreService.repository<TagDocument>("tags");
-const DEFAULT_BOOKMARKS_PAGE_SIZE = 30;
-const RAW_BOOKMARK_PAGE_MULTIPLIER = 3;
+const getBookmarksRepository = async () => (await getFirestoreService()).repository<BookmarkDocument>("bookmarks");
+const getTagsRepository = async () => (await getFirestoreService()).repository<TagDocument>("tags");
 
 const getSessionUserId = async () => {
   const headers = getRequestHeaders();
+  const { auth } = await import("@/lib/firebase/auth");
   const session = await auth.api.getSession({ headers });
 
   if (!session?.user?.id) {
@@ -133,6 +124,7 @@ const resolveTagIds = async (userId: string, tagsInput: string) => {
     throw new Response("Tags are required", { status: 400 });
   }
 
+  const tagsRepository = await getTagsRepository();
   const existingTags = await tagsRepository.findMany([
     { field: "userId", operator: "==", value: userId },
     { field: "deleted", operator: "==", value: false },
@@ -166,6 +158,7 @@ const resolveImportedTagIds = async (
   tagsBySlug: Map<string, FirestoreDocument<TagDocument>>,
 ) => {
   const tagNames = parseTagNamesFromList(tagsInput);
+  const tagsRepository = await getTagsRepository();
   const tagIds: string[] = [];
 
   for (const tagName of tagNames) {
@@ -209,6 +202,7 @@ const mapBookmarkListItem = (
 });
 
 const getUserTagsById = async (userId: string) => {
+  const tagsRepository = await getTagsRepository();
   const tags = await tagsRepository.findMany([
     { field: "userId", operator: "==", value: userId },
     { field: "deleted", operator: "==", value: false },
@@ -217,99 +211,37 @@ const getUserTagsById = async (userId: string) => {
   return new Map(tags.map((tag) => [tag.id, tag]));
 };
 
-const getBookmarksPageByArchivedState = async ({
-  archived,
-  cursor,
-  limit = DEFAULT_BOOKMARKS_PAGE_SIZE,
-}: {
-  archived: boolean;
-  cursor?: string | null;
-  limit?: number;
-}): Promise<BookmarksPage> => {
+const getBookmarksByArchivedState = async (archived: boolean): Promise<BookmarkListItem[]> => {
   const userId = await getSessionUserId();
   const tagsById = await getUserTagsById(userId);
-  const bookmarks: Bookmark[] = [];
-  let nextCursor = cursor ?? null;
-  let hasMoreRawBookmarks = true;
+  const bookmarksRepository = await getBookmarksRepository();
+  const bookmarks = await bookmarksRepository.findMany([
+    { field: "userId", operator: "==", value: userId },
+    { field: "deleted", operator: "==", value: false },
+    ...(archived ? [{ field: "archived", operator: "==" as const, value: true }] : []),
+  ]);
 
-  while (bookmarks.length < limit && hasMoreRawBookmarks) {
-    const rawBookmarks = await bookmarksRepository.findPage({
-      filters: [
-        { field: "userId", operator: "==", value: userId },
-        { field: "deleted", operator: "==", value: false },
-        ...(archived ? [{ field: "archived", operator: "==" as const, value: true }] : []),
-      ],
-      orderBy: [
-        { field: "createdAt", direction: "desc" },
-        { field: FieldPath.documentId(), direction: "desc" },
-      ],
-      limit: limit * RAW_BOOKMARK_PAGE_MULTIPLIER,
-      startAfter: getBookmarkPageStartAfter(nextCursor),
-    });
+  return bookmarks
+    .filter((bookmark) => (bookmark.archived ?? false) === archived)
+    .sort((firstBookmark, secondBookmark) => {
+      const createdAtSort = secondBookmark.createdAt.toMillis() - firstBookmark.createdAt.toMillis();
 
-    if (rawBookmarks.length === 0) {
-      hasMoreRawBookmarks = false;
-      nextCursor = null;
-      break;
-    }
-
-    let lastExaminedBookmark: Bookmark | null = null;
-    let reachedPageLimit = false;
-
-    for (const bookmark of rawBookmarks) {
-      lastExaminedBookmark = bookmark;
-
-      if ((bookmark.archived ?? false) === archived) {
-        bookmarks.push(bookmark);
+      if (createdAtSort !== 0) {
+        return createdAtSort;
       }
 
-      if (bookmarks.length >= limit) {
-        reachedPageLimit = true;
-        break;
-      }
-    }
-
-    nextCursor = lastExaminedBookmark ? encodeBookmarkPageCursor(lastExaminedBookmark) : null;
-    hasMoreRawBookmarks = reachedPageLimit || rawBookmarks.length === limit * RAW_BOOKMARK_PAGE_MULTIPLIER;
-  }
-
-  return {
-    bookmarks: bookmarks.map((bookmark) => mapBookmarkListItem(bookmark, tagsById)),
-    nextCursor: hasMoreRawBookmarks ? nextCursor : null,
-  };
+      return secondBookmark.id.localeCompare(firstBookmark.id);
+    })
+    .map((bookmark) => mapBookmarkListItem(bookmark, tagsById));
 };
-
-function encodeBookmarkPageCursor(bookmark: Bookmark) {
-  return JSON.stringify({
-    createdAt: bookmark.createdAt.toMillis(),
-    id: bookmark.id,
-  });
-}
-
-function getBookmarkPageStartAfter(cursor?: string | null) {
-  if (!cursor) {
-    return [];
-  }
-
-  try {
-    const parsedCursor = z
-      .object({
-        createdAt: z.number(),
-        id: z.string().min(1),
-      })
-      .parse(JSON.parse(cursor));
-
-    return [Timestamp.fromMillis(parsedCursor.createdAt), parsedCursor.id];
-  } catch {
-    throw new Response("Invalid bookmark page cursor", { status: 400 });
-  }
-}
 
 const deleteUnusedTags = async (userId: string, tagIds: string[], deletedBookmarkId: string) => {
   if (tagIds.length === 0) {
     return;
   }
 
+  const bookmarksRepository = await getBookmarksRepository();
+  const tagsRepository = await getTagsRepository();
   const uniqueTagIds = Array.from(new Set(tagIds));
   const remainingBookmarks = await bookmarksRepository.findMany([
     { field: "userId", operator: "==", value: userId },
@@ -332,30 +264,14 @@ const deleteUnusedTags = async (userId: string, tagIds: string[], deletedBookmar
 export const getAllBookmarks = createServerFn({
   method: "GET",
 }).handler(async (): Promise<BookmarkListItem[]> => {
-  const page = await getBookmarksPageByArchivedState({ archived: false });
-
-  return page.bookmarks;
+  return getBookmarksByArchivedState(false);
 });
 
 export const getArchivedBookmarks = createServerFn({
   method: "GET",
 }).handler(async (): Promise<BookmarkListItem[]> => {
-  const page = await getBookmarksPageByArchivedState({ archived: true });
-
-  return page.bookmarks;
+  return getBookmarksByArchivedState(true);
 });
-
-export const getBookmarksPage = createServerFn({
-  method: "GET",
-})
-  .validator((data) => bookmarksPageSchema.parse(data))
-  .handler(async ({ data }): Promise<BookmarksPage> => {
-    return getBookmarksPageByArchivedState({
-      archived: data.archived,
-      cursor: data.cursor,
-      limit: data.limit,
-    });
-  });
 
 export const getBookmarkDetail = createServerFn({
   method: "GET",
@@ -363,6 +279,7 @@ export const getBookmarkDetail = createServerFn({
   .validator((data) => bookmarkDetailSchema.parse(data))
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {
@@ -378,6 +295,7 @@ export const createBookmark = createServerFn({
   .validator((data) => createBookmarkSchema.parse(data))
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
     const tagIds = await resolveTagIds(userId, data.tags);
     const bookmark = await bookmarksRepository.insert({
       userId,
@@ -400,6 +318,8 @@ export const importBookmarks = createServerFn({
   .validator((data) => importBookmarksSchema.parse(data))
   .handler(async ({ data }): Promise<{ importedCount: number; totalCount: number }> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
+    const tagsRepository = await getTagsRepository();
     const existingTags = await tagsRepository.findMany([
       { field: "userId", operator: "==", value: userId },
       { field: "deleted", operator: "==", value: false },
@@ -434,6 +354,7 @@ export const updateBookmark = createServerFn({
   .validator((data) => updateBookmarkSchema.parse(data))
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {
@@ -464,6 +385,7 @@ export const toggleBookmarkPin = createServerFn({
   .validator((data) => bookmarkActionSchema.parse(data))
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {
@@ -489,6 +411,8 @@ export const trackBookmarkView = createServerFn({
   .validator((data) => bookmarkActionSchema.parse(data))
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
+    const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {
@@ -515,6 +439,7 @@ export const archiveBookmark = createServerFn({
   .validator((data) => bookmarkActionSchema.parse(data))
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {
@@ -540,6 +465,7 @@ export const unarchiveBookmark = createServerFn({
   .validator((data) => bookmarkActionSchema.parse(data))
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {
@@ -565,6 +491,7 @@ export const deleteBookmarkPermanently = createServerFn({
   .validator((data) => bookmarkActionSchema.parse(data))
   .handler(async ({ data }): Promise<{ id: string }> => {
     const userId = await getSessionUserId();
+    const bookmarksRepository = await getBookmarksRepository();
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {

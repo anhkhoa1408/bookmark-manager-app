@@ -1,9 +1,8 @@
-import { decodeToken } from "@/server/decodeToken";
-import { betterAuth, BetterAuthPlugin } from "better-auth";
+import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { DecodedIdToken } from "firebase-admin/auth";
+import type { DecodedIdToken } from "firebase-admin/auth";
 
 const firebaseAuthPlugin = (): BetterAuthPlugin => ({
   id: "firebase-auth",
@@ -16,6 +15,8 @@ const firebaseAuthPlugin = (): BetterAuthPlugin => ({
 
       let decoded: DecodedIdToken;
       try {
+        const { decodeToken } = await import("@/server/decodeToken");
+
         decoded = await decodeToken({
           data: body.idToken,
         });

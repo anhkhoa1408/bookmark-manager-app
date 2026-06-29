@@ -1,12 +1,11 @@
-import { adminDb } from "@/lib/firebase/firebase-admin";
 import {
-  FieldPath,
-  Timestamp,
   type DocumentData,
+  type FieldPath,
   type Firestore,
   type OrderByDirection,
   type PartialWithFieldValue,
   type Query,
+  type Timestamp,
   type UpdateData,
   type WhereFilterOp,
   type WithFieldValue,
@@ -108,12 +107,13 @@ export class FirestoreRepository<TDocument extends BaseFirestoreDocument> {
   }
 
   async insert(data: WithFieldValue<CreateFirestoreDocument<TDocument>>): Promise<FirestoreDocument<TDocument>> {
+    const { Timestamp } = await import("firebase-admin/firestore");
     const now = Timestamp.now();
     const documentRef = await this.db.collection(this.collectionName).add(
       Object.assign({}, data, {
-      createdAt: now,
-      updatedAt: now,
-      deleted: false,
+        createdAt: now,
+        updatedAt: now,
+        deleted: false,
       }),
     );
     const snapshot = await documentRef.get();
@@ -127,6 +127,7 @@ export class FirestoreRepository<TDocument extends BaseFirestoreDocument> {
   async insertWithGeneratedId(
     data: WithFieldValue<CreateFirestoreDocument<TDocument>>,
   ): Promise<FirestoreDocument<TDocument>> {
+    const { Timestamp } = await import("firebase-admin/firestore");
     const now = Timestamp.now();
     const documentRef = this.db.collection(this.collectionName).doc();
     const document = Object.assign({}, data, {
@@ -144,6 +145,8 @@ export class FirestoreRepository<TDocument extends BaseFirestoreDocument> {
   }
 
   async set(id: string, data: PartialWithFieldValue<TDocument>): Promise<WriteResult> {
+    const { Timestamp } = await import("firebase-admin/firestore");
+
     return await this.db
       .collection(this.collectionName)
       .doc(id)
@@ -157,6 +160,8 @@ export class FirestoreRepository<TDocument extends BaseFirestoreDocument> {
   }
 
   async update(id: string, data: UpdateData<TDocument>): Promise<WriteResult> {
+    const { Timestamp } = await import("firebase-admin/firestore");
+
     return await this.db
       .collection(this.collectionName)
       .doc(id)
@@ -181,8 +186,10 @@ export class FirestoreService {
 
   private constructor(private readonly db: Firestore) {}
 
-  static getInstance() {
+  static async getInstance() {
     if (!FirestoreService.instance) {
+      const { adminDb } = await import("@/lib/firebase/firebase-admin");
+
       FirestoreService.instance = new FirestoreService(adminDb);
     }
 
@@ -203,4 +210,4 @@ export class FirestoreService {
   }
 }
 
-export const firestoreService = FirestoreService.getInstance();
+export const getFirestoreService = () => FirestoreService.getInstance();

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowDownUpIcon, RefreshCwIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -11,14 +11,12 @@ import { BookmarkDialog } from "@/components/molecules/BookmarkDialog";
 import { VirtualBookmarkGrid } from "@/components/organisms/VirtualBookmarkGrid";
 import { useBookmarkCardActions } from "@/hooks/use-bookmark-card-actions";
 import { useBookmarkFilters } from "@/lib/contexts/bookmark-filters";
-import { getBookmarksPageCacheFirst } from "@/lib/cache/bookmark-cache";
-import type { BookmarkListItem, BookmarksPage } from "@/server/bookmarks";
-
-const BOOKMARKS_PAGE_SIZE = 30;
+import { getBookmarksAndSyncCache } from "@/lib/cache/bookmark-cache";
+import type { BookmarkListItem } from "@/server/bookmarks";
 
 export const Route = createFileRoute("/_main/home")({
   loader: () => ({
-    page: createEmptyBookmarksPage(),
+    bookmarks: [] satisfies BookmarkListItem[],
   }),
   staleTime: 30_000,
   gcTime: 5 * 60_000,
@@ -34,33 +32,26 @@ const sortOptions = [
 ] satisfies Array<ActionDropdownItem & { value: BookmarkSort }>;
 
 function RouteComponent() {
-  const { page: loaderPage } = Route.useLoaderData();
+  const { bookmarks: loaderBookmarks } = Route.useLoaderData();
   const { searchTerm, selectedTagIds } = useBookmarkFilters();
-  const [bookmarks, setBookmarks] = useState(loaderPage.bookmarks);
+  const [bookmarks, setBookmarks] = useState<BookmarkListItem[]>(loaderBookmarks);
   const [selectedSort, setSelectedSort] = useState<BookmarkSort>("recently-added");
   const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const bookmarksQuery = useInfiniteQuery({
+  const bookmarksQuery = useQuery({
     queryKey: ["bookmarks", "active"],
-    queryFn: ({ pageParam }) =>
-      getBookmarksPageCacheFirst({
+    queryFn: () =>
+      getBookmarksAndSyncCache({
         archived: false,
-        cursor: pageParam,
-        limit: BOOKMARKS_PAGE_SIZE,
       }),
-    initialData: {
-      pages: [loaderPage],
-      pageParams: [null],
-    },
-    initialPageParam: null as string | null,
-    getNextPageParam: (page) => page.nextCursor,
+    placeholderData: loaderBookmarks,
     enabled: typeof window !== "undefined",
   });
   const loadError = bookmarksQuery.error ? "Could not load bookmarks right now." : null;
 
   useEffect(() => {
-    setBookmarks(bookmarksQuery.data?.pages.flatMap((page) => page.bookmarks) ?? loaderPage.bookmarks);
-  }, [bookmarksQuery.data, loaderPage.bookmarks]);
+    setBookmarks(bookmarksQuery.data ?? loaderBookmarks);
+  }, [bookmarksQuery.data, loaderBookmarks]);
 
   const bookmarkCardActions = useBookmarkCardActions({
     bookmarks,
@@ -144,22 +135,7 @@ function RouteComponent() {
           </Button>
         </Card>
       ) : bookmarks.length > 0 && filteredBookmarks.length > 0 ? (
-        <>
-          <VirtualBookmarkGrid bookmarks={filteredBookmarks} renderBookmarkCard={renderBookmarkCard} />
-          {bookmarksQuery.hasNextPage ? (
-            <div className="flex shrink-0 justify-center">
-              <Button
-                type="button"
-                variant="secondary"
-                className="border"
-                disabled={bookmarksQuery.isFetchingNextPage}
-                onClick={() => void bookmarksQuery.fetchNextPage()}
-              >
-                {bookmarksQuery.isFetchingNextPage ? "Loading..." : "Load more"}
-              </Button>
-            </div>
-          ) : null}
-        </>
+        <VirtualBookmarkGrid bookmarks={filteredBookmarks} renderBookmarkCard={renderBookmarkCard} />
       ) : bookmarks.length > 0 ? (
         <Card className="items-center gap-12 py-48 text-center dark:bg-neutral-dark-800">
           <CardTitle className="text-neutral-900 dark:text-neutral-0">No bookmarks match your filters</CardTitle>
@@ -186,13 +162,6 @@ function RouteComponent() {
       />
     </main>
   );
-}
-
-function createEmptyBookmarksPage(): BookmarksPage {
-  return {
-    bookmarks: [],
-    nextCursor: null,
-  };
 }
 
 function sortBookmarks(bookmarks: BookmarkListItem[], selectedSort: BookmarkSort) {
