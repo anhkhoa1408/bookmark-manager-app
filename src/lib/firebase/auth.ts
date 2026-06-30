@@ -60,6 +60,7 @@ const firebaseAuthPlugin = (): BetterAuthPlugin => ({
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   secret: process.env.BETTER_AUTH_SECRET,
+  trustedOrigins: ["https://bookmark-management.vercel.app", "https://*.vercel.app"],
   session: {
     expiresIn: FIREBASE_ID_TOKEN_MAX_AGE_SECONDS,
     cookieCache: {
