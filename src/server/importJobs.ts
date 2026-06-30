@@ -273,11 +273,35 @@ export const getImportJob = createServerFn({
     return mapImportJobSummary(job);
   });
 
+export const getActiveImportJob = createServerFn({
+  method: "GET",
+}).handler(async (): Promise<ImportJobSummary | null> => {
+  const user = await getSessionUser();
+  const importJobsRepository = await getImportJobsRepository();
+  const jobs = await importJobsRepository.findMany([
+    { field: "userId", operator: "==", value: user.id },
+    { field: "deleted", operator: "==", value: false },
+  ]);
+  const activeJob = jobs
+    .filter(
+      (job) => job.status === ImportJobStatus.Queued || job.status === ImportJobStatus.Processing,
+    )
+    .sort((firstJob, secondJob) => secondJob.createdAt.toMillis() - firstJob.createdAt.toMillis())[0];
+
+  if (!activeJob) {
+    return null;
+  }
+
+  startImportJobProcessing(activeJob.id);
+
+  return mapImportJobSummary(activeJob);
+});
+
 export async function processImportJobById(jobId: string) {
   const importJobsRepository = await getImportJobsRepository();
   const importJobChunksRepository = await getImportJobChunksRepository();
   const tagsRepository = await getTagsRepository();
-  const { Timestamp } = await import("firebase-admin/firestore");
+  const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
   const job = await importJobsRepository.findById(jobId);
 
   if (
@@ -299,6 +323,18 @@ export async function processImportJobById(jobId: string) {
     { field: "userId", operator: "==", value: job.userId },
     { field: "deleted", operator: "==", value: false },
   ]);
+
+  if (chunks.length === 0 && job.totalChunkCount > 0) {
+    await importJobsRepository.update(job.id, {
+      status: ImportJobStatus.Failed,
+      failedCount: job.totalCount,
+      processedChunkCount: 0,
+      lastError: "Import job has no chunks to process.",
+      completedAt: Timestamp.now(),
+    });
+    return;
+  }
+
   const queuedChunks = chunks
     .filter(
       (chunk) =>
@@ -322,15 +358,15 @@ export async function processImportJobById(jobId: string) {
   ]);
   const importedCount = refreshedChunks.reduce((count, chunk) => count + chunk.importedCount, 0);
   const failedCount = refreshedChunks.reduce((count, chunk) => count + chunk.failedCount, 0);
-  const processedChunkCount = refreshedChunks.filter((chunk) => chunk.status === "succeeded").length;
-  const failedChunk = refreshedChunks.find((chunk) => chunk.status === "failed");
+  const processedChunkCount = refreshedChunks.filter((chunk) => chunk.status === ImportJobChunkStatus.Succeeded).length;
+  const failedChunk = refreshedChunks.find((chunk) => chunk.status === ImportJobChunkStatus.Failed);
 
   await importJobsRepository.update(job.id, {
     status: failedChunk ? ImportJobStatus.Failed : ImportJobStatus.Succeeded,
     importedCount,
     failedCount,
     processedChunkCount,
-    lastError: failedChunk?.error,
+    lastError: failedChunk ? (failedChunk.error ?? "Could not import this bookmark chunk.") : FieldValue.delete(),
     completedAt: Timestamp.now(),
   });
 }
@@ -342,12 +378,13 @@ async function processImportJobChunk(
 ) {
   const importJobChunksRepository = await getImportJobChunksRepository();
   const bookmarksRepository = await getBookmarksRepository();
-  const { Timestamp } = await import("firebase-admin/firestore");
+  const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
 
   await importJobChunksRepository.update(chunk.id, {
     status: ImportJobChunkStatus.Processing,
     startedAt: Timestamp.now(),
-    error: undefined,
+    error: FieldValue.delete(),
+    emailError: FieldValue.delete(),
   });
 
   try {
