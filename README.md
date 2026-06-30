@@ -23,7 +23,6 @@ The UI follows the Atomic Design principle for a clear, scalable component struc
 - Firebase client SDK
 - Firebase Admin SDK
 - Vite
-- Wrangler
 
 ## Requirements
 
@@ -60,12 +59,6 @@ Preview the built app locally:
 
 ```bash
 npm run preview
-```
-
-Deploy with Wrangler:
-
-```bash
-npm run deploy
 ```
 
 ## Environment Setup

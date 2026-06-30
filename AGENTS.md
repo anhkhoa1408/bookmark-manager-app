@@ -10,7 +10,7 @@ Stack
 - shadcn/ui-style primitives in an Atomic Design structure
 - Better Auth + Firebase Authentication
 - Firebase client SDK + Firebase Admin SDK
-- Vite + Wrangler
+- Vite
 
 Commands
 
@@ -19,7 +19,6 @@ Use npm; this repo has package-lock.json.
 - npm run dev - Vite dev server on port 3000
 - npm run build - production build
 - npm run preview - preview build output
-- npm run deploy - build and deploy with Wrangler
 
 There is currently no lint or typecheck script.
 
