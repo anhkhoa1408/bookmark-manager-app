@@ -77,7 +77,7 @@ export default function Header() {
   }, []);
 
   const refreshImportJob = useCallback(
-    async (isActive = () => true) => {
+    async (isActive: () => boolean = () => true) => {
       if (!activeImportJobId) {
         return;
       }
