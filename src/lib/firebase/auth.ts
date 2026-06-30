@@ -12,38 +12,47 @@ const firebaseAuthPlugin = (): BetterAuthPlugin => ({
     signIn: createAuthEndpoint("/firebase/sign-in", { method: "POST", requireHeaders: true }, async (handler) => {
       const body = handler.body;
       if (!body.idToken) {
-        throw new Response("BAD_REQUEST", { status: 400 });
+        return handler.json({ error: "BAD_REQUEST", message: "Missing Firebase ID token." }, { status: 400 });
       }
 
-      let decoded: DecodedIdToken;
       try {
         const { adminAuth } = await import("@/lib/firebase/firebase-admin");
+        const decoded: DecodedIdToken = await adminAuth.verifyIdToken(body.idToken);
 
-        decoded = await adminAuth.verifyIdToken(body.idToken);
+        const email = decoded.email;
+        if (!decoded.uid || !email) {
+          return handler.json(
+            { error: "UNAUTHORIZED", message: "Firebase ID token is missing user claims." },
+            { status: 401 },
+          );
+        }
+
+        const user = {
+          id: decoded.uid,
+          email,
+          name: decoded.name ?? "",
+          image: decoded.picture ?? null,
+          emailVerified: decoded.email_verified ?? false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+
+        const session = await handler.context.internalAdapter.createSession(decoded.uid);
+        await setSessionCookie(handler, { session, user });
+
+        return handler.json({ user });
       } catch (error) {
-        console.error("[auth:firebase-sign-in] Failed to verify Firebase ID token", error);
-        throw new Response("UNAUTHORIZED", { status: 401 });
+        console.error("[auth:firebase-sign-in]", error);
+
+        return handler.json(
+          {
+            error: "UNAUTHORIZED",
+            message: "Failed to sign in with Firebase.",
+            detail: error instanceof Error ? error.message : String(error),
+          },
+          { status: 401 },
+        );
       }
-
-      const email = decoded.email;
-      if (!decoded.uid || !email) {
-        throw new Response("UNAUTHORIZED", { status: 401 });
-      }
-
-      const user = {
-        id: decoded.uid,
-        email,
-        name: decoded.name ?? "",
-        image: decoded.picture ?? null,
-        emailVerified: decoded.email_verified ?? false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const session = await handler.context.internalAdapter.createSession(decoded.uid);
-      await setSessionCookie(handler, { session, user });
-
-      return handler.json({ user });
     }),
   },
 });

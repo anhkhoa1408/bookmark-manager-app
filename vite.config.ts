@@ -21,7 +21,9 @@ const config = defineConfig({
     }),
     tailwindcss(),
     tanstackStart(),
-    nitro(),
+    nitro({
+      noExternals: true,
+    }),
     viteReact(),
   ],
 });

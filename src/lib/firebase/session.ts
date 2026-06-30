@@ -11,6 +11,7 @@ export async function exchangeFirebaseTokenForSession(user: User, options?: { fo
   });
 
   if (!response.ok) {
-    throw new Error("Failed to exchange Firebase token for session.");
+    const errorText = await response.text();
+    throw new Error(errorText || "Failed to exchange Firebase token for session.");
   }
 }
