@@ -60,4 +60,5 @@ export const auth = betterAuth({
     },
   },
   plugins: [firebaseAuthPlugin(), tanstackStartCookies()],
+  trustedOrigins: ["http://localhost:3000", "https://bookmark-management.vercel.app"],
 });
