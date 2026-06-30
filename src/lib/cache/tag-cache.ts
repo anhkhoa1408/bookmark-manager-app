@@ -18,11 +18,10 @@ export async function syncTagsToCache(tags: TagOption[]) {
 
 export async function syncTagsFromServer() {
   const tags = await getTags();
-  const tagsWithBookmarkCounts = await countTagBookmarksFromCache(tags);
 
-  await tagIndexedDbService.replaceTags(tagsWithBookmarkCounts);
+  await tagIndexedDbService.replaceTags(tags);
 
-  return sortTags(tagsWithBookmarkCounts);
+  return sortTags(tags);
 }
 
 export async function clearTagCache() {

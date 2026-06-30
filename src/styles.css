@@ -9,10 +9,11 @@ body {
   font-family: "Manrope", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--neutral-100);
+  background-color: var(--app-background);
 }
 
 :root {
+  --app-background: #e8f0ef;
   --neutral-0: #ffffff;
   --neutral-100: #e8f0ef;
   --neutral-300: #dde9e7;
@@ -23,6 +24,7 @@ body {
 }
 
 .dark {
+  --app-background: #001414;
   --neutral-0: #ffffff;
   --neutral-100: #b1b9b9;
   --neutral-300: #00706e;

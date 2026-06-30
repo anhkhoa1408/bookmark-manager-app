@@ -4,6 +4,7 @@ import { Field, FieldError, FieldLabel } from "@/components/atoms/field";
 import { Input } from "@/components/atoms/input";
 import { Logo } from "@/components/molecules/Logo";
 import { auth } from "@/lib/firebase/firebase";
+import { exchangeFirebaseTokenForSession } from "@/lib/firebase/session";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { FirebaseError } from "firebase/app";
@@ -47,13 +48,7 @@ export const SignInForm: React.FC = () => {
         }
 
         const user = credential.user;
-        const idToken = await user.getIdToken();
-        await fetch("/api/auth/firebase/sign-in", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ idToken }),
-        });
+        await exchangeFirebaseTokenForSession(user);
         toast.dismiss();
         navigate({ to: returnUrl || "/home" });
       } catch (error) {
@@ -70,8 +65,8 @@ export const SignInForm: React.FC = () => {
   });
 
   return (
-    <div className="w-full md:w-4/12">
-      <Card>
+    <div className="w-full max-w-[448px]">
+      <Card className="border border-transparent py-40 dark:border-neutral-dark-500">
         <Logo />
         <CardHeader>
           <CardTitle>Log in to your account</CardTitle>
@@ -141,13 +136,13 @@ export const SignInForm: React.FC = () => {
         <CardFooter className="flex flex-col items-center gap-12">
           <p className="inline-flex gap-6">
             <span>Forgot password?</span>
-            <Link to="/auth/forgot-password" className="font-bold">
+            <Link to="/auth/forgot-password" className="font-bold text-neutral-800 dark:text-neutral-dark-100">
               Reset it
             </Link>
           </p>
           <p className="inline-flex gap-6">
             <span>Don’t have an account?</span>
-            <Link to="/auth/sign-up" className="font-bold">
+            <Link to="/auth/sign-up" className="font-bold text-neutral-900 dark:text-neutral-0">
               Sign up
             </Link>
           </p>

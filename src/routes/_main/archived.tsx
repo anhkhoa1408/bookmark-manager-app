@@ -37,6 +37,7 @@ function RouteComponent() {
   const [selectedSort, setSelectedSort] = useState<BookmarkSort>("recently-added");
   const [selectedBookmarkId, setSelectedBookmarkId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
   const bookmarksQuery = useQuery({
     queryKey: ["bookmarks", "archived"],
     queryFn: () =>
@@ -61,6 +62,7 @@ function RouteComponent() {
     isDetailOpen,
     setIsDetailOpen,
   });
+
   const filteredBookmarks = useMemo(() => {
     const normalizedSearchTerm = searchTerm.trim().toLowerCase();
     const selectedTagIdsSet = new Set(selectedTagIds);
@@ -75,6 +77,7 @@ function RouteComponent() {
 
     return sortBookmarks(filtered, selectedSort);
   }, [bookmarks, searchTerm, selectedSort, selectedTagIds]);
+
   const sortDropdownItems = useMemo(
     () =>
       sortOptions.map((option) => ({
@@ -89,6 +92,7 @@ function RouteComponent() {
       setSelectedSort(value);
     }
   }, []);
+
   const renderBookmarkCard = useCallback(
     (bookmark: BookmarkListItem) => (
       <BookmarkCard

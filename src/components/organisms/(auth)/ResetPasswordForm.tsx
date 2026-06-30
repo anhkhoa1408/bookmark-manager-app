@@ -58,8 +58,8 @@ export const ResetPasswordForm: React.FC = () => {
   });
 
   return (
-    <div className="w-full md:w-4/12">
-      <Card>
+    <div className="w-full max-w-[448px]">
+      <Card className="border border-transparent py-40 dark:border-neutral-dark-500">
         <Logo />
         <CardHeader>
           <CardTitle>Reset Your Password</CardTitle>
@@ -125,7 +125,7 @@ export const ResetPasswordForm: React.FC = () => {
           </CardContent>
         </form>
 
-        <Link to="/auth/sign-in" className="font-bold text-preset-4 mx-auto">
+        <Link to="/auth/sign-in" className="mx-auto text-preset-4 font-bold text-neutral-900 dark:text-neutral-0">
           Back to login
         </Link>
       </Card>

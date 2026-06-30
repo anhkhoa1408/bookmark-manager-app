@@ -18,6 +18,8 @@ type ProfileMenuProps = {
   onLogout?: () => void | Promise<void>;
 };
 
+const themeStorageKey = "bookmark-manager-theme";
+
 const themeOptions: Array<{ value: Theme; label: string; Icon: LucideIcon }> = [
   { value: "light", label: "Light theme", Icon: SunIcon },
   { value: "dark", label: "Dark theme", Icon: MoonIcon },
@@ -33,14 +35,19 @@ export default function ProfileMenu({ user, theme, onThemeChange, onLogout }: Pr
   useEffect(() => {
     if (theme) return;
 
-    setLocalTheme(document.documentElement.classList.contains("dark") ? "dark" : "light");
+    const savedTheme = getStoredTheme();
+    const nextTheme = savedTheme ?? (document.documentElement.classList.contains("dark") ? "dark" : "light");
+
+    applyTheme(nextTheme);
+    setLocalTheme(nextTheme);
   }, [theme]);
 
   const handleThemeChange = (nextTheme: Theme) => {
     onThemeChange?.(nextTheme);
 
     if (!theme) {
-      document.documentElement.classList.toggle("dark", nextTheme === "dark");
+      applyTheme(nextTheme);
+      localStorage.setItem(themeStorageKey, nextTheme);
       setLocalTheme(nextTheme);
     }
   };
@@ -95,6 +102,16 @@ export default function ProfileMenu({ user, theme, onThemeChange, onLogout }: Pr
       </div>
     </div>
   );
+}
+
+function getStoredTheme() {
+  const savedTheme = localStorage.getItem(themeStorageKey);
+
+  return savedTheme === "dark" || savedTheme === "light" ? savedTheme : null;
+}
+
+function applyTheme(theme: Theme) {
+  document.documentElement.classList.toggle("dark", theme === "dark");
 }
 
 function ThemeButton({

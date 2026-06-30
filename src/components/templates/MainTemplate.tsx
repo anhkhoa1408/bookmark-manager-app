@@ -15,13 +15,16 @@ type MainTemplateProps = {
 export default function MainTemplate({ tags, dataLoadError = null }: MainTemplateProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+
   const tagsQuery = useQuery({
     queryKey: ["tags"],
     queryFn: getTagsCacheFirst,
     initialData: tags,
     enabled: typeof window !== "undefined",
   });
+
   const currentTags = tagsQuery.data ?? tags;
+
   const currentDataLoadError = tagsQuery.error
     ? "Could not load tags right now. Your bookmark pages are still available."
     : dataLoadError;

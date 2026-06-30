@@ -5,6 +5,7 @@ import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import appCss from "../styles.css?url";
 import { Toaster } from "@/components/atoms/sonner";
+import { FirebaseSessionSync } from "@/integrations/better-auth/firebase-session-sync";
 
 interface MyRouterContext {
   queryClient: QueryClient;
@@ -56,8 +57,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{var theme=localStorage.getItem("bookmark-manager-theme");document.documentElement.classList.toggle("dark",theme==="dark")}catch{}',
+          }}
+        />
       </head>
       <body>
+        <FirebaseSessionSync />
         {children}
         <TanStackDevtools
           config={{

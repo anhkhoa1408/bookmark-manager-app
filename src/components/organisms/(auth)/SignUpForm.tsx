@@ -59,8 +59,8 @@ export const SignUpForm: React.FC = () => {
   });
 
   return (
-    <div className="w-full md:w-4/12">
-      <Card>
+    <div className="w-full max-w-[448px]">
+      <Card className="border border-transparent py-40 dark:border-neutral-dark-500">
         <Logo />
         <CardHeader>
           <CardTitle>Create your account</CardTitle>
@@ -153,7 +153,7 @@ export const SignUpForm: React.FC = () => {
         <CardFooter className="flex flex-col items-center gap-12">
           <p className="inline-flex gap-6">
             <span>Already have an account?</span>
-            <Link to="/auth/sign-in" className="font-bold">
+            <Link to="/auth/sign-in" className="font-bold text-neutral-900 dark:text-neutral-0">
               Log in
             </Link>
           </p>

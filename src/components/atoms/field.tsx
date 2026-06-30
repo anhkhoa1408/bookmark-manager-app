@@ -7,11 +7,23 @@ function Field({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 function FieldLabel({ className, ...props }: React.ComponentProps<typeof Label>) {
-  return <Label data-slot="field-label" className={cn("text-preset-4", className)} {...props} />;
+  return (
+    <Label
+      data-slot="field-label"
+      className={cn("text-preset-4 text-neutral-900 dark:text-neutral-0", className)}
+      {...props}
+    />
+  );
 }
 
 function FieldDescription({ className, ...props }: React.ComponentProps<"p">) {
-  return <p data-slot="field-description" className={cn(["text-preset-4m text-neutral-800"], className)} {...props} />;
+  return (
+    <p
+      data-slot="field-description"
+      className={cn("text-preset-4m text-neutral-800 dark:text-neutral-dark-100", className)}
+      {...props}
+    />
+  );
 }
 
 function FieldError({
