@@ -1,11 +1,12 @@
 import {
+  FieldValue,
   getFirestoreService,
+  Timestamp,
   type BaseFirestoreDocument,
   type FirestoreDocument,
 } from "@/lib/firebase/firestoreService";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
-import type { Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
 
 type BookmarkDocument = BaseFirestoreDocument & {
@@ -221,8 +222,6 @@ const getBookmarksByArchivedState = async (archived: boolean): Promise<BookmarkL
     ...(archived ? [{ field: "archived", operator: "==" as const, value: true }] : []),
   ]);
 
-  console.log("🚀 - getBookmarksByArchivedState - bookmarks:", bookmarks);
-
   return bookmarks
     .filter((bookmark) => (bookmark.archived ?? false) === archived)
     .sort((firstBookmark, secondBookmark) => {
@@ -414,7 +413,6 @@ export const trackBookmarkView = createServerFn({
   .handler(async ({ data }): Promise<BookmarkListItem> => {
     const userId = await getSessionUserId();
     const bookmarksRepository = await getBookmarksRepository();
-    const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
     const bookmark = await bookmarksRepository.findById(data.id);
 
     if (!bookmark || bookmark.userId !== userId || bookmark.deleted) {

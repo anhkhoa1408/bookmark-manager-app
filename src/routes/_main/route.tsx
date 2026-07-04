@@ -9,6 +9,7 @@ export const Route = createFileRoute("/_main")({
   staleTime: 30_000,
   gcTime: 5 * 60_000,
   component: RouteComponent,
+  notFoundComponent: () => <div>Not found</div>,
   server: {
     middleware: [authMiddleware],
   },

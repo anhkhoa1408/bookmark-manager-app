@@ -1,12 +1,13 @@
 import { ImportJobChunkStatus, ImportJobStatus } from "@/model/import";
 import {
+  FieldValue,
   getFirestoreService,
+  Timestamp,
   type BaseFirestoreDocument,
   type FirestoreDocument,
 } from "@/lib/firebase/firestoreService";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
-import type { Timestamp } from "firebase-admin/firestore";
 import * as z from "zod";
 
 type ImportBookmarkInput = {
@@ -303,7 +304,6 @@ export async function processImportJobById(jobId: string) {
   const importJobsRepository = await getImportJobsRepository();
   const importJobChunksRepository = await getImportJobChunksRepository();
   const tagsRepository = await getTagsRepository();
-  const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
   const job = await importJobsRepository.findById(jobId);
 
   if (!job || job.deleted || job.status === ImportJobStatus.Succeeded || job.status === ImportJobStatus.Failed) {
@@ -372,7 +372,6 @@ async function processImportJobChunk(
 ) {
   const importJobChunksRepository = await getImportJobChunksRepository();
   const bookmarksRepository = await getBookmarksRepository();
-  const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
 
   await importJobChunksRepository.update(chunk.id, {
     status: ImportJobChunkStatus.Processing,

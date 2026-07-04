@@ -32,22 +32,30 @@ export async function clearTagCache() {
   await tagIndexedDbService.clearTags();
 }
 
-export async function syncTagBookmarkCountsFromCache() {
+export async function syncTagBookmarkCountsFromCache(params: CountTagBookmarksParams = {}) {
   const cachedTags = await tagIndexedDbService.getAllTags();
 
   if (cachedTags.length === 0) {
     return [];
   }
 
-  const tagsWithBookmarkCounts = await countTagBookmarksFromCache(cachedTags);
+  const tagsWithBookmarkCounts = await countTagBookmarksFromCache(cachedTags, params);
   await syncTagsToCache(tagsWithBookmarkCounts);
 
   return sortTags(tagsWithBookmarkCounts);
 }
 
-export async function countTagBookmarksFromCache(tags: TagOption[]) {
+type CountTagBookmarksParams = {
+  archived?: boolean;
+};
+
+export async function countTagBookmarksFromCache(tags: TagOption[], params: CountTagBookmarksParams = {}) {
   const cachedBookmarks = await bookmarkIndexedDbService.getAllBookmarks();
-  const bookmarkCountsByTagId = cachedBookmarks.reduce((countsByTagId, bookmark) => {
+  const matchingBookmarks =
+    typeof params.archived === "boolean"
+      ? cachedBookmarks.filter((bookmark) => bookmark.archived === params.archived)
+      : cachedBookmarks;
+  const bookmarkCountsByTagId = matchingBookmarks.reduce((countsByTagId, bookmark) => {
     for (const tag of bookmark.tags) {
       countsByTagId.set(tag.id, (countsByTagId.get(tag.id) ?? 0) + 1);
     }

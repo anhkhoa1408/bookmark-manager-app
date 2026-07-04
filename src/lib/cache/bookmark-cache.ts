@@ -14,7 +14,7 @@ export async function getBookmarksAndSyncCache({ archived }: BookmarkParams) {
     if (matchingBookmarks.length > 0) {
       return matchingBookmarks;
     }
-  } catch {
+  } catch (error) {
     // If IndexedDB is unavailable, fall back to the server.
   }
 

@@ -139,8 +139,11 @@ export default function Header() {
   }, [activeImportJobId, refreshImportJob]);
 
   const handleLogout = async () => {
-    await Promise.allSettled([clearBookmarkCache(), clearTagCache()]);
     await Promise.allSettled([authClient.signOut(), signOutFirebase(firebaseAuth)]);
+    await Promise.allSettled([clearBookmarkCache(), clearTagCache()]);
+    queryClient.removeQueries({ queryKey: ["bookmarks"] });
+    queryClient.removeQueries({ queryKey: ["tags"] });
+    queryClient.removeQueries({ queryKey: ["bookmark-detail"] });
     await navigate({ to: "/auth/sign-in" });
   };
 

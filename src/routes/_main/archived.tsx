@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowDownUpIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -11,6 +11,7 @@ import { VirtualBookmarkGrid } from "@/components/organisms/VirtualBookmarkGrid"
 import { useBookmarkCardActions } from "@/hooks/use-bookmark-card-actions";
 import { useBookmarkFilters } from "@/lib/contexts/bookmark-filters";
 import { getBookmarksAndSyncCache } from "@/lib/cache/bookmark-cache";
+import { syncTagBookmarkCountsFromCache } from "@/lib/cache/tag-cache";
 import type { BookmarkListItem } from "@/server/bookmarks";
 
 export const Route = createFileRoute("/_main/archived")({
@@ -32,6 +33,7 @@ const sortOptions = [
 
 function RouteComponent() {
   const { bookmarks: loaderBookmarks } = Route.useLoaderData();
+  const queryClient = useQueryClient();
   const { searchTerm, selectedTagIds } = useBookmarkFilters();
   const [bookmarks, setBookmarks] = useState<BookmarkListItem[]>(loaderBookmarks);
   const [selectedSort, setSelectedSort] = useState<BookmarkSort>("recently-added");
@@ -52,6 +54,28 @@ function RouteComponent() {
   useEffect(() => {
     setBookmarks(bookmarksQuery.data ?? loaderBookmarks);
   }, [bookmarksQuery.data, loaderBookmarks]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (bookmarksQuery.isPlaceholderData) {
+      return;
+    }
+
+    void syncTagBookmarkCountsFromCache({ archived: true })
+      .then((tagsWithBookmarkCounts) => {
+        if (isActive && tagsWithBookmarkCounts.length > 0) {
+          queryClient.setQueryData(["tags"], tagsWithBookmarkCounts);
+        }
+      })
+      .catch(() => {
+        // Archived bookmarks should remain available even if tag count refresh fails.
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [bookmarksQuery.dataUpdatedAt, bookmarksQuery.isPlaceholderData, queryClient]);
 
   const bookmarkCardActions = useBookmarkCardActions({
     bookmarks,
