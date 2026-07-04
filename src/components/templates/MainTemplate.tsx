@@ -5,7 +5,7 @@ import Header from "../organisms/(header)/Header";
 import { Outlet } from "@tanstack/react-router";
 import type { TagOption } from "@/server/tags";
 import { BookmarkFiltersProvider } from "@/lib/contexts/bookmark-filters";
-import { getTagsCacheFirst } from "@/lib/cache/tag-cache";
+import { getTagsAndSyncCache } from "@/lib/cache/tag-cache";
 
 type MainTemplateProps = {
   tags: TagOption[];
@@ -18,7 +18,7 @@ export default function MainTemplate({ tags, dataLoadError = null }: MainTemplat
 
   const tagsQuery = useQuery({
     queryKey: ["tags"],
-    queryFn: getTagsCacheFirst,
+    queryFn: getTagsAndSyncCache,
     initialData: tags,
     enabled: typeof window !== "undefined",
   });

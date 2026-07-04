@@ -2,7 +2,7 @@ import { betterAuth, type BetterAuthPlugin } from "better-auth";
 import { createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
-import type { DecodedIdToken } from "firebase-admin/auth";
+import { verifyFirebaseIdToken } from "@/lib/firebase/id-token";
 
 const FIREBASE_ID_TOKEN_MAX_AGE_SECONDS = 60 * 60;
 
@@ -16,8 +16,7 @@ const firebaseAuthPlugin = (): BetterAuthPlugin => ({
       }
 
       try {
-        const { adminAuth } = await import("@/lib/firebase/firebase-admin");
-        const decoded: DecodedIdToken = await adminAuth.verifyIdToken(body.idToken);
+        const decoded = await verifyFirebaseIdToken(body.idToken);
 
         const email = decoded.email;
         if (!decoded.uid || !email) {

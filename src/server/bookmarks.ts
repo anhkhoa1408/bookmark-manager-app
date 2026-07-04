@@ -221,6 +221,8 @@ const getBookmarksByArchivedState = async (archived: boolean): Promise<BookmarkL
     ...(archived ? [{ field: "archived", operator: "==" as const, value: true }] : []),
   ]);
 
+  console.log("🚀 - getBookmarksByArchivedState - bookmarks:", bookmarks);
+
   return bookmarks
     .filter((bookmark) => (bookmark.archived ?? false) === archived)
     .sort((firstBookmark, secondBookmark) => {

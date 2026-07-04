@@ -2,11 +2,15 @@ import { bookmarkIndexedDbService } from "@/lib/index-db/bookmark-indexed-db";
 import { tagIndexedDbService } from "@/lib/index-db/tag-indexed-db";
 import { getTags, type TagOption } from "@/server/tags";
 
-export async function getTagsCacheFirst() {
-  const cachedTags = await tagIndexedDbService.getAllTags();
+export async function getTagsAndSyncCache() {
+  try {
+    const cachedTags = await tagIndexedDbService.getAllTags();
 
-  if (cachedTags.length > 0) {
-    return sortTags(await countTagBookmarksFromCache(cachedTags));
+    if (cachedTags.length > 0) {
+      return sortTags(await countTagBookmarksFromCache(cachedTags));
+    }
+  } catch {
+    // If IndexedDB is unavailable, fall back to the server.
   }
 
   return syncTagsFromServer();

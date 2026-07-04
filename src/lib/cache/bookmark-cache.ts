@@ -7,11 +7,15 @@ type BookmarkParams = {
 };
 
 export async function getBookmarksAndSyncCache({ archived }: BookmarkParams) {
-  const cachedBookmarks = await bookmarkIndexedDbService.getAllBookmarks();
-  const matchingBookmarks = sortBookmarks(cachedBookmarks.filter((bookmark) => bookmark.archived === archived));
+  try {
+    const cachedBookmarks = await bookmarkIndexedDbService.getAllBookmarks();
+    const matchingBookmarks = sortBookmarks(cachedBookmarks.filter((bookmark) => bookmark.archived === archived));
 
-  if (matchingBookmarks.length > 0) {
-    return matchingBookmarks;
+    if (matchingBookmarks.length > 0) {
+      return matchingBookmarks;
+    }
+  } catch {
+    // If IndexedDB is unavailable, fall back to the server.
   }
 
   return syncBookmarksFromServer({ archived });

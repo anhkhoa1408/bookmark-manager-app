@@ -1,0 +1,14 @@
+{
+  "name": "bookmark-manager-vercel-auth",
+  "private": true,
+  "version": "0.0.0",
+  "engines": {
+    "node": "22.x"
+  },
+  "scripts": {
+    "deploy": "vercel --prod"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.1"
+  }
+}

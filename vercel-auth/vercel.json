@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/verify-firebase-token.js": {
+      "maxDuration": 10
+    }
+  }
+}

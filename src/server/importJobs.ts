@@ -1,5 +1,9 @@
 import { ImportJobChunkStatus, ImportJobStatus } from "@/model/import";
-import { getFirestoreService, type BaseFirestoreDocument, type FirestoreDocument } from "@/lib/firebase/firestoreService";
+import {
+  getFirestoreService,
+  type BaseFirestoreDocument,
+  type FirestoreDocument,
+} from "@/lib/firebase/firestoreService";
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeaders } from "@tanstack/react-start/server";
 import type { Timestamp } from "firebase-admin/firestore";
@@ -283,9 +287,7 @@ export const getActiveImportJob = createServerFn({
     { field: "deleted", operator: "==", value: false },
   ]);
   const activeJob = jobs
-    .filter(
-      (job) => job.status === ImportJobStatus.Queued || job.status === ImportJobStatus.Processing,
-    )
+    .filter((job) => job.status === ImportJobStatus.Queued || job.status === ImportJobStatus.Processing)
     .sort((firstJob, secondJob) => secondJob.createdAt.toMillis() - firstJob.createdAt.toMillis())[0];
 
   if (!activeJob) {
@@ -304,12 +306,7 @@ export async function processImportJobById(jobId: string) {
   const { FieldValue, Timestamp } = await import("firebase-admin/firestore");
   const job = await importJobsRepository.findById(jobId);
 
-  if (
-    !job ||
-    job.deleted ||
-    job.status === ImportJobStatus.Succeeded ||
-    job.status === ImportJobStatus.Failed
-  ) {
+  if (!job || job.deleted || job.status === ImportJobStatus.Succeeded || job.status === ImportJobStatus.Failed) {
     return;
   }
 
@@ -336,10 +333,7 @@ export async function processImportJobById(jobId: string) {
   }
 
   const queuedChunks = chunks
-    .filter(
-      (chunk) =>
-        chunk.status === ImportJobChunkStatus.Queued || chunk.status === ImportJobChunkStatus.Failed,
-    )
+    .filter((chunk) => chunk.status === ImportJobChunkStatus.Queued || chunk.status === ImportJobChunkStatus.Failed)
     .sort((firstChunk, secondChunk) => firstChunk.index - secondChunk.index);
   const existingTags = await tagsRepository.findMany([
     { field: "userId", operator: "==", value: job.userId },
